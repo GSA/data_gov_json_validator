@@ -68,9 +68,12 @@ function data_gov_json_validator($data_file_path,$schema_file_path){
             }
         }
     }
-    file_put_contents("json_validation_results.json",$total_results);
-    print_r(json_encode($total_results));
+    $json_total_results = json_encode($total_results);
+    file_put_contents("json_validation_results.json",$json_total_results);
+    print_r($json_total_results);
 
+    //search CKAN.
+    //TODO: Optimize search. Use only one for loop for validation as well as search may be.
     data_gov_json_validator_csv_report($data_array,$total_results);
 }
 
@@ -107,7 +110,7 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
             $number_of_results = sizeof($base_output_array['result']['results']);
 
             //If more than one then try to match access URL
-            if ($number_of_results > 1){
+            if ($number_of_results >= 1){
                 foreach($base_output_array['result']['results'] as $ckan_result){
                     if(trim($ckan_result['resources'][0]['url']) === trim($data->accessURL)){
                         $result_urls .= "http://catalog.data.gov/dataset/".$ckan_result['name'];
@@ -117,12 +120,10 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
                         $result_urls_access_url_no_match .= "http://catalog.data.gov/dataset/".$ckan_result['name']." | ";
                     }
                 }
-            }else if ($number_of_results == 1){
-                $result_urls .= "http://catalog.data.gov/dataset/".$base_output_array['result']['results'][0]['name'];
             }
         }
 
-        $csv_line .= $data->title.",";
+        $csv_line .= str_replace(","," ",$data->title).",";
         $csv_line .= $data->accessURL.",";
         $csv_line .= ($total_results[$data->identifier]['Valid']) ? 'true' : 'false'.",";
 

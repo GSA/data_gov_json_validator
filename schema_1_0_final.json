@@ -37,7 +37,7 @@
         },
         "contactPoint": {
             "title":"Contact Name",
-            "description":"Contact personâ€™s name for the asset.",
+            "description":"Contact person’s name for the asset.",
             "type": "string"
         },
         "dataDictionary": {
@@ -48,7 +48,7 @@
         },
         "dataQuality": {
             "title":"Data Quality",
-            "description":"Whether the dataset meets the agencyâ€™s Information Quality Guidelines (true/false).",
+            "description":"Whether the dataset meets the agency’s Information Quality Guidelines (true/false).",
             "type": "boolean"
         },
         "description": {
@@ -90,7 +90,7 @@
             "title":"Release Date",
             "description":"Date of formal issuance.",
             "type": "string",
-            "format": "date-time"
+            "pattern": "^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$"
         },
         "keyword": {
             "title": "Tags",
@@ -104,7 +104,7 @@
         },
         "landingPage": {
             "title":"Homepage URL",
-            "description":"Alternative landing page used to redirect user to a contextual, Agency-hosted â€œhomepageâ€ for the Dataset or API when selecting this resource from the Data.gov user interface.",
+            "description":"Alternative landing page used to redirect user to a contextual, Agency-hosted “homepage” for the Dataset or API when selecting this resource from the Data.gov user interface.",
             "type": "string",
             "format": "uri"
         },
@@ -124,7 +124,7 @@
         },
         "mbox": {
             "title":"Contact Email",
-            "description":"Contact personâ€™s email address.",
+            "description":"Contact person’s email address.",
             "type": "string",
             "format": "email"
         },
@@ -132,7 +132,7 @@
             "title": "Last Update",
             "description": "Most recent date on which the dataset was changed, updated or modified.",
             "type": "string",
-            "format": "date-time"
+            "pattern": "^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$"
         },
         "PrimaryITInvestmentUII": {
             "title":"Primary IT Investment UII",
@@ -179,10 +179,8 @@
         "temporal": {
             "title":"Temporal",
             "description":"The range of temporal applicability of a dataset (i.e., a start and end date of applicability for the data).",
-            "type": "array",
-            "items": {
-                "type": "string"
-            }
+            "type": "string",
+            "pattern": "^([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?(\\/)([\\+-]?\\d{4}(?!\\d{2}\\b))((-?)((0[1-9]|1[0-2])(\\3([12]\\d|0[1-9]|3[01]))?|W([0-4]\\d|5[0-2])(-?[1-7])?|(00[1-9]|0[1-9]\\d|[12]\\d{2}|3([0-5]\\d|6[1-6])))([T\\s]((([01]\\d|2[0-3])((:?)[0-5]\\d)?|24\\:?00)([\\.,]\\d+(?!:))?)?(\\17[0-5]\\d([\\.,]\\d+)?)?([zZ]|([\\+-])([01]\\d|2[0-3]):?([0-5]\\d)?)?)?)?$"
         },
         "theme": {
             "title":"Category",
