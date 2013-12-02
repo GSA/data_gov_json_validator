@@ -1,0 +1,165 @@
+<?php
+/**
+ * User: ykhadilkar
+ * Date: 11/20/13
+ * Time: 11:34 AM
+ */
+use JsonSchema\Validator;
+use JsonSchema\RefResolver;
+use JsonSchema\Uri\UriRetriever;
+
+define("CKAN_URL", "http://catalog.data.gov/api/3/action/package_search");
+
+function data_gov_json_validator_menu(){
+    $items = array();
+
+    $items['json-validator'] = array(
+        'title' => 'Data.gov JSON Validator',
+        'page callback' => 'data_gov_json_validator_validator_form',
+        'access arguments' => array('access content'),
+    );
+
+    return $items;
+}
+
+/**
+ *
+ */
+function data_gov_json_validator_validator_form(){
+    $data_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/department_of_treasury.json';
+    $schema_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/schema_1_0_final.json';
+    data_gov_json_validator($data_file_path, $schema_file_path);
+}
+
+/**
+ * @param $data_file_path
+ * @param $schema_file_path
+ */
+function data_gov_json_validator($data_file_path,$schema_file_path){
+    // Register the autoloader and ensure the library is available.
+    composer_manager_register_autoloader();
+    // Get the schema and data as objects
+    $retriever = new UriRetriever;
+
+    //get data
+    $data_string = file_get_contents($data_file_path);
+    $data_array = json_decode($data_string);
+
+    //get schema
+    $schema = $retriever->retrieve('file://' . $schema_file_path);
+
+    // If you use $ref or if you are unsure, resolve those references here
+    // This modifies the $schema object
+    $refResolver = new JsonSchema\RefResolver($retriever);
+    $refResolver->resolve($schema, 'file://' . __DIR__);
+    $total_results = array();
+
+    foreach($data_array as $index => $data) {
+        // Validate
+        $validator = new JsonSchema\Validator();
+        $validator->check($data, $schema);
+        $total_results[$data->identifier]["Title"] = $data->title;
+        if ($validator->isValid()) {
+            $total_results[$data->identifier]['Valid'] = True;
+        } else {
+            $total_results[$data->identifier]['Valid'] = False;
+            foreach ($validator->getErrors() as $error) {
+                $total_results[$data->identifier]['Errors'][] = $error;
+            }
+        }
+    }
+    file_put_contents("json_validation_results.json",$total_results);
+    print_r(json_encode($total_results));
+
+    data_gov_json_validator_csv_report($data_array,$total_results);
+}
+
+function data_gov_json_validator_csv_report($data_array,$total_results){
+    $csv_line = "Title,";
+    $csv_line .= "Access URL,";
+    $csv_line .= "Is Valid,";
+    $csv_line .= "Number of Errors,";
+    //TODO:Check GeoSpecial Flag
+    //$csv_line .= "Is Geospatial";
+    $csv_line .= "Number of Match,";
+    $csv_line .= "Access URL match,";
+    $csv_line .= "CKAN urls\n";
+
+
+
+    foreach($data_array as $index => $data) {
+
+        //search for title
+        $base_output = data_gov_json_validator_search_solr($data->title);
+
+        //convert to an array
+        $base_output_array = json_decode($base_output,true);
+
+        $result_urls = "";
+        $result_urls_access_url_no_match = "";
+        //$is_geospacial = "no";
+        $access_url_match = "no";
+        $number_of_results ="na";
+
+        if(is_array($base_output_array['result']) && is_array($base_output_array['result']['results'])){
+
+            //number of results
+            $number_of_results = sizeof($base_output_array['result']['results']);
+
+            //If more than one then try to match access URL
+            if ($number_of_results > 1){
+                foreach($base_output_array['result']['results'] as $ckan_result){
+                    if(trim($ckan_result['resources'][0]['url']) === trim($data->accessURL)){
+                        $result_urls .= "http://catalog.data.gov/dataset/".$ckan_result['name'];
+                        $access_url_match = "yes";
+                        break;
+                    }else{
+                        $result_urls_access_url_no_match .= "http://catalog.data.gov/dataset/".$ckan_result['name']." | ";
+                    }
+                }
+            }else if ($number_of_results == 1){
+                $result_urls .= "http://catalog.data.gov/dataset/".$base_output_array['result']['results'][0]['name'];
+            }
+        }
+
+        $csv_line .= $data->title.",";
+        $csv_line .= $data->accessURL.",";
+        $csv_line .= ($total_results[$data->identifier]['Valid']) ? 'true' : 'false'.",";
+
+        if(is_array($total_results[$data->identifier]['Errors'])){
+            $csv_line .= sizeof($total_results[$data->identifier]['Errors']).",";
+        }else{
+            $csv_line .= "0,";
+        }
+        //needs work...
+        //$csv_line .= $$is_geospacial.",";
+        $csv_line .= $number_of_results.",";
+        $csv_line .= $access_url_match.",";
+        if($result_urls!=""){
+            $csv_line .= $result_urls."\n";
+        }else{
+            $csv_line .= $result_urls_access_url_no_match."\n";
+        }
+    }
+
+    file_put_contents("csv_results.csv",$csv_line);
+}
+
+/**
+ * @param $title
+ * @return mixed
+ */
+function data_gov_json_validator_search_solr($title){
+    //search in catalog
+    //initialize curl and set base options
+    $ch = curl_init(CKAN_URL);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HEADER, "Content-Type: application/json");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $solr_query = "title:".$title;
+    $query = '{"fq":"'.$solr_query.'"}';
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
+    $curl_output = curl_exec($ch);
+    curl_close($ch);
+    return $curl_output;
+}

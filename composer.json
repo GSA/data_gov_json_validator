@@ -1,0 +1,15 @@
+{
+    "name": "drupal/data_gov_json_validator",
+    "type": "drupal-module",
+    "description": "A Framework and UI for integrating with the json schema library.",
+    "license": "GPL-2.0",
+    "authors": [
+        {
+            "name": "Yatin Khadilkar",
+            "role": "Project Lead"
+        }
+    ],
+    "require": {
+        "justinrainbow/json-schema": "~1.3.3"
+    }
+}

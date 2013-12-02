@@ -1,0 +1,4 @@
+name = JSON Validator
+description = JSON schema validator for Data.gov
+package = Data.gov
+core = 7.x
