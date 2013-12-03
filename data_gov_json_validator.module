@@ -68,8 +68,9 @@ function data_gov_json_validator($data_file_path,$schema_file_path){
             }
         }
     }
-    $json_total_results = json_encode($total_results);
+    $json_total_results = json_encode($total_results, JSON_PRETTY_PRINT);
     file_put_contents("json_validation_results.json",$json_total_results);
+    echo '<pre>';
     print_r($json_total_results);
 
     //search CKAN.

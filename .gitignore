@@ -1,3 +1,6 @@
+index.php
 composer.lock
 composer.phar
 vendor/
+json_validation_results.json
+csv_results.csv
