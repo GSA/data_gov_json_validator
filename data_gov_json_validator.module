@@ -4,6 +4,7 @@
  * Date: 11/20/13
  * Time: 11:34 AM
  */
+
 use JsonSchema\Validator;
 use JsonSchema\RefResolver;
 use JsonSchema\Uri\UriRetriever;
@@ -11,7 +12,7 @@ use JsonSchema\Uri\UriRetriever;
 /**
  *
  */
-define("CKAN_URL", "http://catalog.data.gov/api/3/action/package_search");
+define('CKAN_URL', "http://catalog.data.gov/api/3/action/package_search");
 
 /**
  * @return array
@@ -51,6 +52,37 @@ function data_gov_json_validator($data_file_path,$schema_file_path){
     $data_string = file_get_contents($data_file_path);
     $data_array = json_decode($data_string);
 
+    $success = false;
+    $json_file_error = 'Input JSON file could not be decoded: ';
+    switch (json_last_error()) {
+        case JSON_ERROR_NONE:
+            $success = true;
+//            echo ' - No errors';
+            break;
+        case JSON_ERROR_DEPTH:
+            echo $json_file_error.' - Maximum stack depth exceeded';
+            break;
+        case JSON_ERROR_STATE_MISMATCH:
+            echo $json_file_error.' - Underflow or the modes mismatch';
+            break;
+        case JSON_ERROR_CTRL_CHAR:
+            echo $json_file_error.' - Unexpected control character found';
+            break;
+        case JSON_ERROR_SYNTAX:
+            echo $json_file_error.' - Syntax error, malformed JSON';
+            break;
+        case JSON_ERROR_UTF8:
+            echo $json_file_error.' - Malformed UTF-8 characters, possibly incorrectly encoded';
+            break;
+        default:
+            echo $json_file_error.' - Unknown error';
+            break;
+    }
+
+    if (!$success) {
+        return;
+    }
+
     //get schema
     $schema = $retriever->retrieve('file://' . $schema_file_path);
 
@@ -60,7 +92,7 @@ function data_gov_json_validator($data_file_path,$schema_file_path){
     $refResolver->resolve($schema, 'file://' . __DIR__);
     $total_results = array();
 
-    foreach($data_array as $index => $data) {
+    foreach($data_array as $data) {
         // Validate
         $validator = new JsonSchema\Validator();
         $validator->check($data, $schema);
@@ -116,7 +148,8 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
 
         $result_urls = "";
         $result_urls_access_url_no_match = "";
-        //$is_geospacial = "no";
+//      TODO:Check GeoSpecial Flag
+//        $is_geospatial = "no";
         $access_url_match = "no";
         $number_of_results ="na";
 
@@ -153,7 +186,7 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
         }
 
 //      TODO:Check GeoSpecial Flag
-//        $csv_line[] = $$is_geospacial;
+//        $csv_line[] = $$is_geospatial;
 
         $csv_line[] = $number_of_results;
         $csv_line[] = $access_url_match;
