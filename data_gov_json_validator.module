@@ -32,17 +32,22 @@ function data_gov_json_validator_menu(){
 /**
  *
  */
-function data_gov_json_validator_validator_form(){
-    $data_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/data/department_of_treasury.json';
+function data_gov_json_validator_validator_form()
+{
     $schema_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/schema/schema_1_0_final.json';
-    data_gov_json_validator($data_file_path, $schema_file_path);
+    $data_dir = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/data/';
+
+    foreach (glob($data_dir.'*.json') as $dataset) {
+        data_gov_json_validator($dataset, $schema_file_path, true);
+    }
 }
 
 /**
  * @param $data_file_path
  * @param $schema_file_path
+ * @param bool $search_enabled
  */
-function data_gov_json_validator($data_file_path,$schema_file_path){
+function data_gov_json_validator($data_file_path, $schema_file_path, $search_enabled = false){
     $basename = basename($data_file_path);
     echo 'Processing '.$basename.' ... ';
     // Register the autoloader and ensure the library is available.
@@ -92,40 +97,47 @@ function data_gov_json_validator($data_file_path,$schema_file_path){
     // This modifies the $schema object
     $refResolver = new JsonSchema\RefResolver($retriever);
     $refResolver->resolve($schema, 'file://' . __DIR__);
-    $total_results = array();
+    $json_validation_results = array();
+
+    $valid = $invalid = 0;
 
     foreach($data_array as $data) {
         // Validate
         $validator = new JsonSchema\Validator();
         $validator->check($data, $schema);
-        $total_results[$data->identifier]["Title"] = $data->title;
+        $json_validation_results[$data->identifier]["Title"] = $data->title;
         if ($validator->isValid()) {
-            $total_results[$data->identifier]['Valid'] = True;
+            $json_validation_results[$data->identifier]['Valid'] = True;
+            $valid++;
         } else {
-            $total_results[$data->identifier]['Valid'] = False;
+            $invalid++;
+            $json_validation_results[$data->identifier]['Valid'] = False;
             foreach ($validator->getErrors() as $error) {
-                $total_results[$data->identifier]['Errors'][] = $error;
+                $json_validation_results[$data->identifier]['Errors'][] = $error;
             }
         }
     }
-    $json_total_results = json_encode($total_results, JSON_PRETTY_PRINT);
-    $resultsFile = str_replace('.json', '_results_.json', $basename);
+    $json_total_results = json_encode($json_validation_results, JSON_PRETTY_PRINT);
+    $resultsFile = str_replace('.json', '_results.json', $basename);
     file_put_contents(__DIR__ . '/results/'.$resultsFile, $json_total_results);
-    echo 'DONE   <br />'.PHP_EOL;
+    echo "DONE ; VALID: $valid ; INVALID: $invalid ; <br />".PHP_EOL;
 //    print_r($json_total_results);
 
     //search CKAN.
     //TODO: Optimize search. Use only one for loop for validation as well as search may be.
-//    data_gov_json_validator_csv_report($data_array,$total_results);
+    if ($search_enabled) {
+        data_gov_json_validator_csv_report($data_array, $json_validation_results, $basename);
+    }
 }
 
 /**
  * @param $data_array
- * @param $total_results
+ * @param $json_validation_results
  */
-function data_gov_json_validator_csv_report($data_array,$total_results){
+function data_gov_json_validator_csv_report($data_array, $json_validation_results, $basename){
 
-    $fp = fopen(__DIR__.'/results/csv_results.csv', 'w');
+    $resultsFile = str_replace('.json', '_results.csv', $basename);
+    $fp = fopen(__DIR__.'/results/'.$resultsFile, 'w');
 
     $csv_header = array(
         'Dataset Title in JSON',
@@ -140,32 +152,46 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
 
     fputcsv($fp, $csv_header);
 
-    foreach($data_array as $data) {
+    $json_escape_from = array('(', ')');
+    $json_escape_to = array('.', '.');
 
-        //search for title
-        $base_output = data_gov_json_validator_search_solr($data->title);
+    $data_chunks = array_chunk($data_array, 10);
+    foreach ($data_chunks as $data_chunk) {
+//        prepare solr search request
+        $titles = array();
+        foreach ($data_chunk as $data) {
+            $titles[] = '('.str_replace($json_escape_from, $json_escape_to, $data->title).')';
+        }
+        $title = join(' OR ', $titles);
+        $base_output = data_gov_json_validator_search_solr($title);
 
         //convert to an array
         $base_output_array = json_decode($base_output,true);
 
-        $result_urls = "";
-        $result_urls_access_url_no_match = "";
-        $is_geospatial = "na";
-        $access_url_match = "no";
-        $number_of_results ="na";
+        foreach ($data_chunk as $data) {
+            $result_urls = "";
+            $result_urls_access_url_no_match = "";
+            $is_geospatial = "na";
+            $access_url_match = "no";
+            $number_of_matches = 0;
 
-        if(is_array($base_output_array['result']) && is_array($base_output_array['result']['results'])){
+            if(
+                isset($base_output_array['result']) &&
+                is_array($base_output_array['result']) &&
+                is_array($base_output_array['result']['results'])){
 
-            //number of results
-            $number_of_results = sizeof($base_output_array['result']['results']);
+                //number of results
+                $number_of_results = sizeof($base_output_array['result']['results']);
 
-            //If one or more matches found then try to match access URL
-            if ($number_of_results){
-                $no_match = array();
-                foreach($base_output_array['result']['results'] as $ckan_result){
-                    if(trim($ckan_result['resources'][0]['url']) === trim($data->accessURL)){
-                        $result_urls .= "http://catalog.data.gov/dataset/".$ckan_result['name'];
-                        $access_url_match = 'yes';
+                //If one or more matches found then try to match access URL
+                if ($number_of_results){
+                    $no_match = array();
+                    foreach($base_output_array['result']['results'] as $ckan_result){
+                        if (trim($data->title) !== trim($ckan_result['title'])) {
+                            continue;
+                        }
+                        $number_of_matches++;
+
                         $is_geospatial = 'false';
                         if (isset($ckan_result['extras'])) {
                             foreach ($ckan_result['extras'] as $extra) {
@@ -174,32 +200,41 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
                                 }
                             }
                         }
-                        break;
-                    }else{
-                        $no_match[] = 'http://catalog.data.gov/dataset/'.$ckan_result['name'];
+
+                        if(trim($ckan_result['resources'][0]['url']) === trim($data->accessURL)){
+                            $result_urls .= "http://catalog.data.gov/dataset/".$ckan_result['name'];
+                            $access_url_match = 'yes';
+
+                            break;
+                        }else{
+                            $no_match[] = 'http://catalog.data.gov/dataset/'.$ckan_result['name'];
+                        }
                     }
+                    if (sizeof($no_match) > 1) {
+                        $is_geospatial = 'na';
+                    }
+                    $result_urls_access_url_no_match = join(' | ', $no_match);
                 }
-                $result_urls_access_url_no_match = join(' | ', $no_match);
             }
+
+            $csv_line = array();
+            $csv_line[] = $data->title;
+            $csv_line[] = $data->accessURL;
+            $csv_line[] = $json_validation_results[$data->identifier]['Valid'] ? 'true' : 'false';
+
+            if (is_array($ers = $json_validation_results[$data->identifier]['Errors'])) {
+                $csv_line[] = sizeof($ers);
+            } else {
+                $csv_line[] = 0;
+            }
+
+            $csv_line[] = $number_of_matches;
+            $csv_line[] = $access_url_match;
+            $csv_line[] = $is_geospatial;
+            $csv_line[] = $result_urls ?: $result_urls_access_url_no_match;
+
+            fputcsv($fp, $csv_line);
         }
-
-        $csv_line = array();
-        $csv_line[] = $data->title;
-        $csv_line[] = $data->accessURL;
-        $csv_line[] = $total_results[$data->identifier]['Valid'] ? 'true' : 'false';
-
-        if (is_array($ers = $total_results[$data->identifier]['Errors'])) {
-            $csv_line[] = sizeof($ers);
-        } else {
-            $csv_line[] = 0;
-        }
-
-        $csv_line[] = $number_of_results;
-        $csv_line[] = $access_url_match;
-        $csv_line[] = $is_geospatial;
-        $csv_line[] = $result_urls ?: $result_urls_access_url_no_match;
-
-        fputcsv($fp, $csv_line);
     }
 
     fclose($fp);
@@ -214,12 +249,33 @@ function data_gov_json_validator_search_solr($title){
     //initialize curl and set base options
     $ch = curl_init(CKAN_URL);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HEADER, "Content-Type: application/json");
+    curl_setopt($ch, CURLOPT_HEADER, "Content-Type: text/plain; charset=utf-8");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-    $solr_query = "title:".$title;
+//    $solr_query = json_encode(array('title' => $title));
+//    $query = '{"fq":"'.$solr_query.'"}';
+
+//    $query = array('fq' => array('title' => $title));
+    $solr_query = "title:(".$title.")";
     $query = '{"fq":"'.$solr_query.'"}';
+
+//    die($query);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 0);
     $curl_output = curl_exec($ch);
+
+    $error = curl_error($ch);
+    $result = array( 'header' => '',
+        'body' => '',
+        'curl_error' => '',
+        'http_code' => '',
+        'last_url' => '');
+    if ( $error != "" ) {
+        $result['curl_error'] = $error;
+        var_dump($result);
+        die();
+    }
+
+//    die($curl_output);
     curl_close($ch);
     return $curl_output;
 }
