@@ -17,8 +17,12 @@ Installation
 Usage
 ===
 You can use it as a drupal module, or as a standalone script.
-For a standalone version, just run `standalone.php` in your browser or console.
-Check the `$data_file_path` and schema before using.
+
+1. Put all your JSON datasets to /data/ folder
+2. Run script
+3. Grab the results from /results/ folder
+
+For a standalone version, just run `./standalone/index.php` in your browser or console.
 
 Links
 ===

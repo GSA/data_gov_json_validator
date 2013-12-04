@@ -33,8 +33,8 @@ function data_gov_json_validator_menu(){
  *
  */
 function data_gov_json_validator_validator_form(){
-    $data_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/department_of_treasury.json';
-    $schema_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/schema_1_0_final.json';
+    $data_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/data/department_of_treasury.json';
+    $schema_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/schema/schema_1_0_final.json';
     data_gov_json_validator($data_file_path, $schema_file_path);
 }
 
@@ -43,6 +43,8 @@ function data_gov_json_validator_validator_form(){
  * @param $schema_file_path
  */
 function data_gov_json_validator($data_file_path,$schema_file_path){
+    $basename = basename($data_file_path);
+    echo 'Processing '.$basename.' ... ';
     // Register the autoloader and ensure the library is available.
     composer_manager_register_autoloader();
     // Get the schema and data as objects
@@ -107,13 +109,14 @@ function data_gov_json_validator($data_file_path,$schema_file_path){
         }
     }
     $json_total_results = json_encode($total_results, JSON_PRETTY_PRINT);
-    file_put_contents("json_validation_results.json",$json_total_results);
-    echo '<pre>';
-    print_r($json_total_results);
+    $resultsFile = str_replace('.json', '_results_.json', $basename);
+    file_put_contents(__DIR__ . '/results/'.$resultsFile, $json_total_results);
+    echo 'DONE   <br />'.PHP_EOL;
+//    print_r($json_total_results);
 
     //search CKAN.
     //TODO: Optimize search. Use only one for loop for validation as well as search may be.
-    data_gov_json_validator_csv_report($data_array,$total_results);
+//    data_gov_json_validator_csv_report($data_array,$total_results);
 }
 
 /**
@@ -122,7 +125,7 @@ function data_gov_json_validator($data_file_path,$schema_file_path){
  */
 function data_gov_json_validator_csv_report($data_array,$total_results){
 
-    $fp = fopen('./csv_results.csv', 'w');
+    $fp = fopen(__DIR__.'/results/csv_results.csv', 'w');
 
     $csv_header = array(
         'Dataset Title in JSON',
