@@ -23,4 +23,4 @@ Check the `$data_file_path` and schema before using.
 Links
 ===
 1. JSON online editor (http://www.jsoneditoronline.org)
-2. POD online json validator http://project-open-data.github.io/json-validator/
+2. POD online json validator (http://project-open-data.github.io/json-validator/)

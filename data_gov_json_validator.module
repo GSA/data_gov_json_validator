@@ -125,15 +125,14 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
     $fp = fopen('./csv_results.csv', 'w');
 
     $csv_header = array(
-        'Title',
-        'Access URL',
-        'Is Valid',
+        'Dataset Title in JSON',
+        'Access URL in JSON',
+        'Valid to POD Schema',
         'Number of Errors',
-//      TODO:Check GeoSpecial Flag
-//        'Is Geospatial',
-        'Number of Matches',
-        'Access URL matches',
-        'CKAN urls',
+        'Number of Matches in catalog.data.gov',
+        'Access URL match flag',
+        'Is Geospatial',
+        'catalog.data.gov URLs for matches found',
     );
 
     fputcsv($fp, $csv_header);
@@ -148,8 +147,7 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
 
         $result_urls = "";
         $result_urls_access_url_no_match = "";
-//      TODO:Check GeoSpecial Flag
-//        $is_geospatial = "no";
+        $is_geospatial = "na";
         $access_url_match = "no";
         $number_of_results ="na";
 
@@ -158,19 +156,27 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
             //number of results
             $number_of_results = sizeof($base_output_array['result']['results']);
 
-            //If more than one then try to match access URL
-            if ($number_of_results >= 1){
+            //If one or more matches found then try to match access URL
+            if ($number_of_results){
+                $no_match = array();
                 foreach($base_output_array['result']['results'] as $ckan_result){
-                    $no_match = array();
                     if(trim($ckan_result['resources'][0]['url']) === trim($data->accessURL)){
                         $result_urls .= "http://catalog.data.gov/dataset/".$ckan_result['name'];
-                        $access_url_match = "yes";
+                        $access_url_match = 'yes';
+                        $is_geospatial = 'false';
+                        if (isset($ckan_result['extras'])) {
+                            foreach ($ckan_result['extras'] as $extra) {
+                                if ('metadata_type' == $extra['key'] && 'geospatial' == $extra['value']) {
+                                    $is_geospatial = 'true';
+                                }
+                            }
+                        }
                         break;
                     }else{
                         $no_match[] = 'http://catalog.data.gov/dataset/'.$ckan_result['name'];
                     }
-                    $result_urls_access_url_no_match = join(' | ', $no_match);
                 }
+                $result_urls_access_url_no_match = join(' | ', $no_match);
             }
         }
 
@@ -179,17 +185,15 @@ function data_gov_json_validator_csv_report($data_array,$total_results){
         $csv_line[] = $data->accessURL;
         $csv_line[] = $total_results[$data->identifier]['Valid'] ? 'true' : 'false';
 
-        if (isset($data->identifier['Errors']) && is_array($ers = $total_results[$data->identifier['Errors']])) {
+        if (is_array($ers = $total_results[$data->identifier]['Errors'])) {
             $csv_line[] = sizeof($ers);
         } else {
             $csv_line[] = 0;
         }
 
-//      TODO:Check GeoSpecial Flag
-//        $csv_line[] = $$is_geospatial;
-
         $csv_line[] = $number_of_results;
         $csv_line[] = $access_url_match;
+        $csv_line[] = $is_geospatial;
         $csv_line[] = $result_urls ?: $result_urls_access_url_no_match;
 
         fputcsv($fp, $csv_line);
