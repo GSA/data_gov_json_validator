@@ -3,6 +3,10 @@ data_gov_json_validator
 
 JSON Validator and CKAN Search
 
+POD Schema is used for JSON validation http://project-open-data.github.io/schema/
+
+API3 package search of data.gov catalog is used for search http://catalog.data.gov/api/3/action/package_search
+
 Installation
 ===
 
