@@ -216,7 +216,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
                         $resourceUrl = trim($ckan_result['resources'][0]['url']);
 
                         if($resourceUrl === trim($data->accessURL)){
-                            $result_urls .= "http://catalog.data.gov/dataset/".$ckan_result['name'];
+                            $result_urls = "http://catalog.data.gov/dataset/".$ckan_result['name'];
                             $access_url_match = 'yes';
                             break;
                         }
@@ -224,6 +224,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
                         if ('no' == $access_url_match && isset($data->distribution)) {
                             foreach ($data->distribution as $distribution) {
                                 if ($resourceUrl == trim($distribution->accessURL)) {
+                                    $result_urls = "http://catalog.data.gov/dataset/".$ckan_result['name'];
                                     $access_url_match = 'yes';
                                 }
                             }
@@ -242,7 +243,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
 
             $csv_line = array();
             $csv_line[] = $data->title;
-            $csv_line[] = $data->accessURL;
+            $csv_line[] = $data->accessURL ?: (isset($data->distribution)?$data->distribution[0]->accessURL:'');
 
             $id = md5($data->identifier.$data->title);
 
