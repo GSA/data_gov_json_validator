@@ -213,12 +213,23 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
                             }
                         }
 
-                        if(trim($ckan_result['resources'][0]['url']) === trim($data->accessURL)){
+                        $resourceUrl = trim($ckan_result['resources'][0]['url']);
+
+                        if($resourceUrl === trim($data->accessURL)){
                             $result_urls .= "http://catalog.data.gov/dataset/".$ckan_result['name'];
                             $access_url_match = 'yes';
-
                             break;
-                        }else{
+                        }
+
+                        if ('no' == $access_url_match && isset($data->distribution)) {
+                            foreach ($data->distribution as $distribution) {
+                                if ($resourceUrl == trim($distribution->accessURL)) {
+                                    $access_url_match = 'yes';
+                                }
+                            }
+                        }
+
+                        if ('no' == $access_url_match) {
                             $no_match[] = 'http://catalog.data.gov/dataset/'.$ckan_result['name'];
                         }
                     }
