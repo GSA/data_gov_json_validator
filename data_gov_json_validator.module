@@ -6,11 +6,12 @@
  */
 
 use JsonSchema\Validator;
-use JsonSchema\RefResolver;
 use JsonSchema\Uri\UriRetriever;
 
 /**
  *
+ * Documentation
+ * http://docs.ckan.org/en/latest/api.html#ckan.logic.action.get.package_search
  */
 define('CKAN_URL', "http://catalog.data.gov/api/3/action/package_search");
 
@@ -36,6 +37,8 @@ function data_gov_json_validator_validator_form()
 {
     $schema_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/schema/schema_1_0_final.json';
     $data_dir = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/data/';
+    define('RESULTS_LOG', DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/results/processing');
+    is_file(RESULTS_LOG) && unlink(RESULTS_LOG);
 
     foreach (glob($data_dir.'*.json') as $dataset) {
         data_gov_json_validator($dataset, $schema_file_path, true);
@@ -49,7 +52,8 @@ function data_gov_json_validator_validator_form()
  */
 function data_gov_json_validator($data_file_path, $schema_file_path, $search_enabled = false){
     $basename = basename($data_file_path);
-    echo 'Processing '.$basename.' ... ';
+    error_log('---===---===---===---'.PHP_EOL, 3, RESULTS_LOG);
+    error_log('Processing '.$basename.' started ... '.PHP_EOL, 3, RESULTS_LOG);
     // Register the autoloader and ensure the library is available.
     composer_manager_register_autoloader();
     // Get the schema and data as objects
@@ -64,25 +68,24 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
     switch (json_last_error()) {
         case JSON_ERROR_NONE:
             $success = true;
-//            echo ' - No errors';
             break;
         case JSON_ERROR_DEPTH:
-            echo $json_file_error.' - Maximum stack depth exceeded';
+            error_log($json_file_error.' - Maximum stack depth exceeded'.PHP_EOL, 3, RESULTS_LOG);
             break;
         case JSON_ERROR_STATE_MISMATCH:
-            echo $json_file_error.' - Underflow or the modes mismatch';
+            error_log($json_file_error.' - Underflow or the modes mismatch'.PHP_EOL, 3, RESULTS_LOG);
             break;
         case JSON_ERROR_CTRL_CHAR:
-            echo $json_file_error.' - Unexpected control character found';
+            error_log($json_file_error.' - Unexpected control character found'.PHP_EOL, 3, RESULTS_LOG);
             break;
         case JSON_ERROR_SYNTAX:
-            echo $json_file_error.' - Syntax error, malformed JSON';
+            error_log($json_file_error.' - Syntax error, malformed JSON'.PHP_EOL, 3, RESULTS_LOG);
             break;
         case JSON_ERROR_UTF8:
-            echo $json_file_error.' - Malformed UTF-8 characters, possibly incorrectly encoded';
+            error_log($json_file_error.' - Malformed UTF-8 characters, possibly incorrectly encoded'.PHP_EOL, 3, RESULTS_LOG);
             break;
         default:
-            echo $json_file_error.' - Unknown error';
+            error_log($json_file_error.' - Unknown error'.PHP_EOL, 3, RESULTS_LOG);
             break;
     }
 
@@ -105,22 +108,24 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
         // Validate
         $validator = new JsonSchema\Validator();
         $validator->check($data, $schema);
-        $json_validation_results[$data->identifier]["Title"] = $data->title;
+        $id = md5($data->identifier.$data->title);
+        $json_validation_results[$id]["Title"] = $data->title;
+        $json_validation_results[$id]["identifier"] = $data->identifier;
         if ($validator->isValid()) {
-            $json_validation_results[$data->identifier]['Valid'] = True;
+            $json_validation_results[$id]['Valid'] = True;
             $valid++;
         } else {
             $invalid++;
-            $json_validation_results[$data->identifier]['Valid'] = False;
+            $json_validation_results[$id]['Valid'] = False;
             foreach ($validator->getErrors() as $error) {
-                $json_validation_results[$data->identifier]['Errors'][] = $error;
+                $json_validation_results[$id]['Errors'][] = $error;
             }
         }
     }
     $json_total_results = json_encode($json_validation_results, JSON_PRETTY_PRINT);
     $resultsFile = str_replace('.json', '_results.json', $basename);
     file_put_contents(__DIR__ . '/results/'.$resultsFile, $json_total_results);
-    echo "DONE ; VALID: $valid ; INVALID: $invalid ; <br />".PHP_EOL;
+    error_log(" VALID: $valid ; INVALID: $invalid ; ".PHP_EOL, 3, RESULTS_LOG);
 //    print_r($json_total_results);
 
     //search CKAN.
@@ -152,21 +157,28 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
 
     fputcsv($fp, $csv_header);
 
-    $json_escape_from = array('(', ')');
-    $json_escape_to = array('.', '.');
-
     $data_chunks = array_chunk($data_array, 10);
     foreach ($data_chunks as $data_chunk) {
 //        prepare solr search request
-        $titles = array();
+        $titles = $original_titles = array();
         foreach ($data_chunk as $data) {
-            $titles[] = '('.str_replace($json_escape_from, $json_escape_to, $data->title).')';
+            $original_titles[] = $data->title;
+            $titles[] = '('.escapeSolrValue($data->title).')';
         }
-        $title = join(' OR ', $titles);
+        $title = '('.join(' OR ', $titles).')';
         $base_output = data_gov_json_validator_search_solr($title);
 
         //convert to an array
         $base_output_array = json_decode($base_output,true);
+
+        if (!isset($base_output_array['result'])) {
+//            error_log('No results  for these titles:'.PHP_EOL, 3, RESULTS_LOG);
+//            error_log(join(PHP_EOL, $original_titles).PHP_EOL, 3, RESULTS_LOG);
+//            error_log($base_output.PHP_EOL, 3, RESULTS_LOG);
+        } elseif ($base_output_array['result']['count'] > $sz = sizeof($base_output_array['result']['results'])) {
+            error_log("Too many results (".$base_output_array['result']['count'].") for these titles:".PHP_EOL, 3, RESULTS_LOG);
+            error_log(join(PHP_EOL, $original_titles).PHP_EOL, 3, RESULTS_LOG);
+        }
 
         foreach ($data_chunk as $data) {
             $result_urls = "";
@@ -220,9 +232,12 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
             $csv_line = array();
             $csv_line[] = $data->title;
             $csv_line[] = $data->accessURL;
-            $csv_line[] = $json_validation_results[$data->identifier]['Valid'] ? 'true' : 'false';
 
-            if (is_array($ers = $json_validation_results[$data->identifier]['Errors'])) {
+            $id = md5($data->identifier.$data->title);
+
+            $csv_line[] = $json_validation_results[$id]['Valid'] ? 'true' : 'false';
+
+            if (is_array($ers = $json_validation_results[$id]['Errors'])) {
                 $csv_line[] = sizeof($ers);
             } else {
                 $csv_line[] = 0;
@@ -249,16 +264,18 @@ function data_gov_json_validator_search_solr($title){
     //initialize curl and set base options
     $ch = curl_init(CKAN_URL);
     curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HEADER, "Content-Type: text/plain; charset=utf-8");
+    curl_setopt($ch, CURLOPT_HEADER, "Content-Type: application/json;charset=utf-8");
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-//    $solr_query = json_encode(array('title' => $title));
-//    $query = '{"fq":"'.$solr_query.'"}';
 
-//    $query = array('fq' => array('title' => $title));
-    $solr_query = "title:(".$title.")";
-    $query = '{"fq":"'.$solr_query.'"}';
+    $solr_request = array(
+        'fq'    =>  'title:'.$title,
+        'rows'  =>  500,
+    );
+    $query = json_encode($solr_request);
 
+//    echo $query.'<br />'.PHP_EOL;
 //    die($query);
+
     curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 0);
     $curl_output = curl_exec($ch);
@@ -278,4 +295,14 @@ function data_gov_json_validator_search_solr($title){
 //    die($curl_output);
     curl_close($ch);
     return $curl_output;
+}
+
+function escapeSolrValue($string)
+{
+    $match = array('\\', '+', '-', '&', '|', '!', '(', ')', '{', '}', '[', ']', '^', '~', '*', '?', ':', '"', ';');
+//    $replace = array('\\\\', '\\+', '\\-', '\\&', '\\|', '\\!', '\\(', '\\)', '\\{', '\\}', '\\[', '\\]', '\\^', '\\~', '\\*', '\\?', '\\:', '\\"', '\\;');
+    $replace = array(' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ');
+    $string = str_replace($match, $replace, $string);
+
+    return $string;
 }

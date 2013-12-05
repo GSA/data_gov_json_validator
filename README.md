@@ -6,6 +6,7 @@ JSON Validator and CKAN Search
 POD Schema is used for JSON validation http://project-open-data.github.io/schema/
 
 Package search API v.3 of data.gov catalog is used for search http://catalog.data.gov/api/3/action/package_search
+Documentation here http://docs.ckan.org/en/latest/api.html#ckan.logic.action.get.package_search
 
 Installation
 ===
@@ -38,8 +39,13 @@ You can use it as a drupal module, or as a standalone script.
 
    The results will be called using data files name, with _results postfix:
   * `example1_results.json`
+  * `example1_results.csv`
   * `department_treasury_results.json`
+  * `department_treasury_results.csv`
   * `last_department_results.json`
+  * `last_department_results.csv`
+
+  The `processing.log` in same folder will give you some overall statistics information.
 
 
 Links
