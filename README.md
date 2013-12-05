@@ -6,7 +6,6 @@ JSON Validator and CKAN Search
 POD Schema is used for JSON validation http://project-open-data.github.io/schema/
 
 Package search API v.3 of data.gov catalog is used for search http://catalog.data.gov/api/3/action/package_search
-Documentation here http://docs.ckan.org/en/latest/api.html#ckan.logic.action.get.package_search
 
 Installation
 ===
@@ -52,3 +51,4 @@ Links
 ===
 1. JSON online editor (http://www.jsoneditoronline.org)
 2. POD online json validator (http://project-open-data.github.io/json-validator/)
+3. The CKAN API Documentation (http://docs.ckan.org/en/latest/api.html#ckan.logic.action.get.package_search)
