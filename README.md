@@ -16,9 +16,25 @@ Installation
     $ curl -sS https://getcomposer.org/installer | php
     ```
 
-2. Run Composer: `php composer.phar install`
+2. Run Composer:
 
-Usage
+    ``` sh
+    $ php composer.phar install
+    ```
+
+Getting JSON files from the agencies
+===
+
+1. Check and update `data/agency_json_urls.csv`. The format is simple: `"AGENCY_TITLE", json_url`
+```
+"Department of Agriculture",http://www.usda.gov/data.json
+"Department of Education",http://www.ed.gov/data.json
+"Department of Energy",http://www.energy.gov/data.json
+```
+
+2. Run `php standalone/download.php` to download latest JSONs
+
+Validation and CKAN search
 ===
 You can use it as a drupal module, or as a standalone script.
 
@@ -32,7 +48,7 @@ You can use it as a drupal module, or as a standalone script.
 
 2. Run script
 
-   For a standalone version, just run `./standalone/index.php` in your browser or console.
+   For a standalone version, just run `php standalone/index.php`.
 
 3. Grab the results from /results/ folder
 
