@@ -14,7 +14,7 @@ use JsonSchema\Uri\UriRetriever;
  * http://docs.ckan.org/en/latest/api.html#ckan.logic.action.get.package_search
  */
 define('CKAN_URL', "http://catalog.data.gov/api/3/action/package_search");
-define('CKAN_REQUESTS_PER_SEARCH', 50);
+define('CKAN_REQUESTS_PER_SEARCH', 20);
 define('CKAN_RESULTS_PER_PAGE', 500);
 define('CKAN_API_RETRY_ON_ERROR', 3);
 
@@ -38,7 +38,7 @@ function data_gov_json_validator_menu(){
  */
 function data_gov_json_validator_validator_form()
 {
-    $schema_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/schema/schema_1_0_final.json';
+    $schema_file_path = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/config/schema_1_0_final.json';
     $data_dir = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/data/';
     $results_dir = DRUPAL_ROOT.'/'.drupal_get_path('module', 'data_gov_json_validator').'/results/';
     define('RESULTS_LOG', $results_dir.'processing');
@@ -66,7 +66,7 @@ function data_gov_json_validator_validator_form()
 function data_gov_json_validator($data_file_path, $schema_file_path, $search_enabled = false){
     $basename = basename($data_file_path);
     error_log('---===---===---===---'.PHP_EOL, 3, RESULTS_LOG);
-    error_log('Processing '.$basename.' started ... '.PHP_EOL, 3, RESULTS_LOG);
+    error_log('Processing '.$basename.PHP_EOL, 3, RESULTS_LOG);
     // Register the autoloader and ensure the library is available.
     composer_manager_register_autoloader();
     // Get the schema and data as objects
@@ -191,6 +191,12 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
 
         $title = '('.join(' OR ', $titles).')';
 
+//        workaround
+        $national = false;
+        if ('((National Bridge Inventory))' == $title) {
+            $title = '(National Bridge Inventory -2005 -2006 -2007 -2008 -2009 -2010 -2011 -2012 -2013 -2014)';
+        }
+
         $csv_result_urls = array();
         $csv_result_urls_access_url_no_match = array();
         $csv_is_geospatial = array();
@@ -212,12 +218,13 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
             $start_from += CKAN_RESULTS_PER_PAGE;
 
             if ($start_from>CKAN_RESULTS_PER_PAGE*2)
-                echo ' long search start from '.$start_from." for request $title ".PHP_EOL;
+                echo PHP_EOL.' long search start from '.$start_from." for request $title ".PHP_EOL.PHP_EOL;
 
             //convert to an array
             $base_output_array = json_decode($base_output,true);
 
             if (!isset($base_output_array['result'])) {
+                break;
 //            error_log('No results  for these titles:'.PHP_EOL, 3, RESULTS_LOG);
 //            error_log(join(PHP_EOL, $original_titles).PHP_EOL, 3, RESULTS_LOG);
 //            error_log($base_output.PHP_EOL, 3, RESULTS_LOG);
@@ -231,7 +238,6 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
             $sz = sizeof($base_output_array['result']['results']);
 
             foreach ($data_chunk as $index => $data) {
-
                 if(
                     isset($base_output_array['result']) &&
                     is_array($base_output_array['result']) &&
@@ -262,7 +268,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
                                     $resourceUrl = trim($ckan_resource['url']);
 
 //                                checking whether JSON resource accessURL equals CKAN resource url
-                                    if($resourceUrl === trim($data->accessURL)){
+                                    if(isset($data->accessURL) && $resourceUrl === trim($data->accessURL)){
                                         $csv_result_urls[$index] = "http://catalog.data.gov/dataset/".$ckan_result['name'];
                                         $csv_access_url_match[$index] = 'yes';
                                         break 1;
@@ -272,7 +278,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
 //                                JSON resource distribution urls
                                     if (isset($data->distribution) && is_array($data->distribution)) {
                                         foreach ($data->distribution as $distribution) {
-                                            if ($resourceUrl == trim($distribution->accessURL)) {
+                                            if (isset($distribution->accessURL) && $resourceUrl == trim($distribution->accessURL)) {
                                                 $csv_result_urls[$index] = "http://catalog.data.gov/dataset/".$ckan_result['name'];
                                                 $csv_access_url_match[$index] = 'yes';
                                                 break 2;
@@ -300,13 +306,15 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
 
                 $csv_line = array();
                 $csv_line[] = $data->title;
-                $csv_line[] = $data->accessURL ?: (isset($data->distribution)?$data->distribution[0]->accessURL:'');
+                $distributionUrl = (isset($data->distribution) && is_array($data->distribution)
+                    && isset($data->distribution[0]->accessURL)) ? $data->distribution[0]->accessURL : false;
+                $csv_line[] = isset($data->accessURL) ? $data->accessURL : ($distributionUrl?:'');
 
                 $id = md5($data->identifier.$data->title);
 
                 $csv_line[] = $json_validation_results[$id]['Valid'] ? 'true' : 'false';
 
-                if (is_array($ers = $json_validation_results[$id]['Errors'])) {
+                if (isset($json_validation_results[$id]['Errors']) && is_array($ers = $json_validation_results[$id]['Errors'])) {
                     $csv_line[] = sizeof($ers);
                 } else {
                     $csv_line[] = 0;

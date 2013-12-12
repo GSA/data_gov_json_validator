@@ -25,8 +25,13 @@ foreach (glob($results_dir.'*.json') as $dataset) {
     unlink($dataset);
 }
 
+$start = time();
+
 foreach (glob($data_dir.'*.json') as $dataset) {
     data_gov_json_validator($dataset, JSON_SCHEMA_PATH, true);
 }
+
+$finish = time();
+echo PHP_EOL.(($finish-$start)/60).' minutes '.(($finish-$start)%60).' seconds '.PHP_EOL;
 
 ?>done

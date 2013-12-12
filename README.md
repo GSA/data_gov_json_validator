@@ -7,6 +7,8 @@ POD Schema is used for JSON validation http://project-open-data.github.io/schema
 
 Package search API v.3 of data.gov catalog is used for search http://catalog.data.gov/api/3/action/package_search
 
+Full agencies and their `data.json` urls are listed on the POD Dashboard http://data.civicagency.org/offices
+
 Installation
 ===
 
@@ -25,7 +27,7 @@ Installation
 Getting JSON files from the agencies
 ===
 
-1. Check and update `data/agency_json_urls.csv`. The format is simple: `"AGENCY_TITLE", json_url`
+1. Check and update `config/agency_json_urls.csv`. The format is simple: `"AGENCY_TITLE", json_url`
 ```
 "Department of Agriculture",http://www.usda.gov/data.json
 "Department of Education",http://www.ed.gov/data.json
@@ -34,11 +36,12 @@ Getting JSON files from the agencies
 
 2. Run `php standalone/download.php` to download latest JSONs
 
+The `data/agency_json_download.log` will contain overall statistics about latest json update
+
 Validation and CKAN search
 ===
-You can use it as a drupal module, or as a standalone script.
 
-1. Put all your JSON datasets to /data/ folder
+1. Put all your JSON datasets to /data/ folder OR download them using download.php
 
   Files must be in JSON, named by *.json pattern
   * `example1.json`
