@@ -4,17 +4,20 @@ $data_dir = __DIR__.'/../data/';
 $config_dir = __DIR__.'/../config/';
 $json_urls_csv_path = $config_dir . 'agency_json_urls.csv';
 
-foreach (glob($data_dir.'*.json') as $dataset) {
-    unlink($dataset);
+define('ONLY_TEST_LOCAL_DATASETS', in_array('test', $argv));
+
+if (!ONLY_TEST_LOCAL_DATASETS) {
+    foreach (glob($data_dir.'*.json') as $dataset) {
+        unlink($dataset);
+    }
 }
 
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-ini_set('memory_limit', '1000M');
+ini_set('memory_limit', '2000M');
 
 // 30 minutes
 set_time_limit(60*30);
-mb_internal_encoding('UTF-8');
 
 $log = '';
 
@@ -36,23 +39,24 @@ foreach ($csv_data as $line) {
     $fixed = false;
     $network = true;
 
-    if (@!copy($url, $data_dir.$title) && !stream_copy($url, $data_dir.$title)) {
-        $error = 'NETWORK ERROR 404' . PHP_EOL;
-        echo $error;
-        $log .= $error;
-        is_file($data_dir.$title) && unlink($data_dir.$title);
-        continue;
+    if (!ONLY_TEST_LOCAL_DATASETS) {
+        if (@!copy($url, $data_dir.$title) && !stream_copy($url, $data_dir.$title)) {
+            $error = 'NETWORK ERROR 404' . PHP_EOL;
+            echo $error;
+            $log .= $error;
+            is_file($data_dir.$title) && unlink($data_dir.$title);
+            continue;
+        }
     }
-
 
     $content = @file_get_contents($data_dir.$title);
 
-    $json = json_decode($content);
+    $try = json_decode($content);
     $json_error = '';
 
-    if (is_null($json)) {
-        $invalid = true;
+    if (is_null($try)) {
         $json = $content;
+        $invalid = true;
 
         switch (json_last_error()) {
             case JSON_ERROR_DEPTH:
@@ -100,8 +104,18 @@ foreach ($csv_data as $line) {
             }
         }
 
+        if (!$fixed && (strrpos($content, ']['))) {
+            $a = str_replace('][', ',', $content);
+            $a = trim(iconv('UTF-8', 'UTF-8//IGNORE', utf8_encode(trim(preg_replace('/\x{EF}\x{BB}\x{BF}/','',$a)))));
+            $try = json_decode($a);
+            if (!is_null($try)) {
+                $json = json_encode($try, JSON_PRETTY_PRINT);
+                $fixed = 'SUCCESS (REPLACED "][" WITH "," )';
+            }
+        }
+
     } else {
-        $json = json_encode($json, JSON_PRETTY_PRINT);
+        $json = json_encode($try, JSON_PRETTY_PRINT);
     }
 
     $result = file_put_contents($data_dir.$title, $json);

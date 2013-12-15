@@ -34,7 +34,9 @@ Getting JSON files from the agencies
 "Department of Energy",http://www.energy.gov/data.json
 ```
 
-2. Run `php standalone/download.php` to download latest JSONs
+2. Run `php standalone/download.php` to download latest JSONs.
+Use 'test' param (`php standalone/download.php test`) to skip re-downloading files,
+and just run json testing/fixing of existing datasets.
 
 The `data/agency_json_download.log` will contain overall statistics about latest json update
 

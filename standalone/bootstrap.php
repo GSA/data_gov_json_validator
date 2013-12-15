@@ -20,6 +20,6 @@ ini_set('display_errors', 1);
 
 // 30 minutes
 set_time_limit(60*30);
-ini_set('memory_limit', '500M');
+ini_set('memory_limit', '1500M');
 
 define('JSON_SCHEMA_PATH', __DIR__.'/../config/schema_1_0_final.json');

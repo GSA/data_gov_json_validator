@@ -14,8 +14,17 @@ use JsonSchema\Uri\UriRetriever;
  * http://docs.ckan.org/en/latest/api.html#ckan.logic.action.get.package_search
  */
 define('CKAN_URL', "http://catalog.data.gov/api/3/action/package_search");
+/**
+ *
+ */
 define('CKAN_REQUESTS_PER_SEARCH', 20);
+/**
+ *
+ */
 define('CKAN_RESULTS_PER_PAGE', 500);
+/**
+ *
+ */
 define('CKAN_API_RETRY_ON_ERROR', 3);
 
 /**
@@ -149,7 +158,6 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
 //    print_r($json_total_results);
 
     //search CKAN.
-    //TODO: Optimize search. Use only one for loop for validation as well as search may be.
     if ($search_enabled) {
         data_gov_json_validator_csv_report($data_array, $json_validation_results, $basename);
     }
@@ -158,6 +166,7 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
 /**
  * @param $data_array
  * @param $json_validation_results
+ * @param $basename
  */
 function data_gov_json_validator_csv_report($data_array, $json_validation_results, $basename){
 
@@ -192,7 +201,6 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
         $title = '('.join(' OR ', $titles).')';
 
 //        workaround
-        $national = false;
         if ('((National Bridge Inventory))' == $title) {
             $title = '(National Bridge Inventory -2005 -2006 -2007 -2008 -2009 -2010 -2011 -2012 -2013 -2014)';
         }
@@ -339,6 +347,8 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
 
 /**
  * @param $title
+ * @param int $rows
+ * @param int $start
  * @return mixed
  */
 function data_gov_json_validator_search_solr($title, $rows = 100, $start = 0)
@@ -377,16 +387,20 @@ function data_gov_json_validator_search_solr($title, $rows = 100, $start = 0)
         }
     }
 
-    if ( '' !== $error ) {
+    if ( isset($error) && '' !== $error ) {
         $result['curl_error'] = $error;
         echo "curl error with request ".CKAN_URL." with request ".$query." <br />".PHP_EOL;
         var_dump($result);
     }
 
     curl_close($ch);
-    return $curl_output;
+    return $curl_output ?: false;
 }
 
+/**
+ * @param $string
+ * @return mixed
+ */
 function escapeSolrValue($string)
 {
     $match = array('\\', '+', '-', '&', '|', '!', '(', ')', '{', '}', '[', ']', '^', '~', '*', '?', ':', '"', ';');
