@@ -62,7 +62,10 @@ function data_gov_json_validator_validator_form()
         unlink($dataset);
     }
 
-    foreach (glob($data_dir.'*.json') as $dataset) {
+    $datasets = glob($data_dir.'*.json');
+    sort($datasets);
+
+    foreach ($datasets as $dataset) {
         data_gov_json_validator($dataset, $schema_file_path, true);
     }
 }
@@ -131,12 +134,19 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
     $json_validation_results = array();
 
     $valid = $invalid = 0;
+    $counter = array();
 
     foreach($data_array as $data) {
+        $id = md5($data->identifier.$data->title);
+        if (isset($counter[$id])) {
+            echo PHP_EOL."Duplicate found:".PHP_EOL;
+            echo '('.$data->identifier.')'.$data->title.PHP_EOL;
+        }
+        @$counter[$id]++;
+
         // Validate
         $validator = new JsonSchema\Validator();
         $validator->check($data, $schema);
-        $id = md5($data->identifier.$data->title);
         $json_validation_results[$id]["Title"] = $data->title;
         $json_validation_results[$id]["identifier"] = $data->identifier;
         if ($validator->isValid()) {
@@ -150,6 +160,7 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
             }
         }
     }
+
     $json_total_results = json_encode($json_validation_results, JSON_PRETTY_PRINT);
     $resultsFile = str_replace('.json', '_results.json', $basename);
     file_put_contents(__DIR__ . '/results/'.$resultsFile, $json_total_results);
@@ -168,8 +179,8 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
  * @param $json_validation_results
  * @param $basename
  */
-function data_gov_json_validator_csv_report($data_array, $json_validation_results, $basename){
-
+function data_gov_json_validator_csv_report($data_array, $json_validation_results, $basename)
+{
     $resultsFile = str_replace('.json', '_results.csv', $basename);
     $fp = fopen(__DIR__.'/results/'.$resultsFile, 'w');
 
@@ -186,6 +197,10 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
 
     fputcsv($fp, $csv_header);
 
+    /**
+     * Split json datas to sets of CKAN_REQUESTS_PER_SEARCH , for speed-up script running by
+     * reducing count CKAN request, grouping them together
+     */
     $data_chunks = array_chunk($data_array, CKAN_REQUESTS_PER_SEARCH);
 
     foreach ($data_chunks as $data_chunk) {
@@ -212,6 +227,9 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
         $csv_number_of_matches = array();
         $csv_no_match = array();
 
+        /**
+         * Preparing csv results containers
+         */
         foreach ($data_chunk as $index => $data) {
             $csv_result_urls[$index] = '';
             $csv_result_urls_access_url_no_match[$index] = '';
@@ -222,11 +240,15 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
         }
 
         $start_from = 0;
+        /**
+         * Check CKAN for existing records
+         */
         while ($base_output = data_gov_json_validator_search_solr($title, CKAN_RESULTS_PER_PAGE, $start_from)) {
-            $start_from += CKAN_RESULTS_PER_PAGE;
+            if ($start_from>CKAN_RESULTS_PER_PAGE*2) {
+                echo PHP_EOL.'Multi page search start from '.$start_from.' for request:'.PHP_EOL. $title . PHP_EOL.PHP_EOL;
+            }
 
-            if ($start_from>CKAN_RESULTS_PER_PAGE*2)
-                echo PHP_EOL.' long search start from '.$start_from." for request $title ".PHP_EOL.PHP_EOL;
+            $start_from += CKAN_RESULTS_PER_PAGE;
 
             //convert to an array
             $base_output_array = json_decode($base_output,true);
@@ -302,43 +324,46 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
                 }
             }
             
-            foreach ($data_chunk as $index => $data) {
-                if ('na' == $csv_is_geospatial[$index] && $csv_number_of_matches[$index]
-                        && ('yes' == $csv_access_url_match[$index])) {
-                    $csv_is_geospatial[$index] = 'false';
-                }
-
-                if(sizeof($csv_no_match[$index])) {
-                    $csv_result_urls_access_url_no_match[$index] = join(' | ', $csv_no_match[$index]);
-                }
-
-                $csv_line = array();
-                $csv_line[] = $data->title;
-                $distributionUrl = (isset($data->distribution) && is_array($data->distribution)
-                    && isset($data->distribution[0]->accessURL)) ? $data->distribution[0]->accessURL : false;
-                $csv_line[] = isset($data->accessURL) ? $data->accessURL : ($distributionUrl?:'');
-
-                $id = md5($data->identifier.$data->title);
-
-                $csv_line[] = $json_validation_results[$id]['Valid'] ? 'true' : 'false';
-
-                if (isset($json_validation_results[$id]['Errors']) && is_array($ers = $json_validation_results[$id]['Errors'])) {
-                    $csv_line[] = sizeof($ers);
-                } else {
-                    $csv_line[] = 0;
-                }
-
-                $csv_line[] = $csv_number_of_matches[$index];
-                $csv_line[] = $csv_access_url_match[$index];
-                $csv_line[] = $csv_is_geospatial[$index];
-                $csv_line[] = $csv_result_urls[$index] ?: $csv_result_urls_access_url_no_match[$index];
-
-                fputcsv($fp, $csv_line);
-            }
-            
             if (($start_from > $base_output_array['result']['count']) || ($sz < CKAN_RESULTS_PER_PAGE)) {
                 break;
             }
+        }
+
+        /**
+         * Writing CSV results for current data set
+         */
+        foreach ($data_chunk as $index => $data) {
+            if ('na' == $csv_is_geospatial[$index] && $csv_number_of_matches[$index]
+                && ('yes' == $csv_access_url_match[$index])) {
+                $csv_is_geospatial[$index] = 'false';
+            }
+
+            if(sizeof($csv_no_match[$index])) {
+                $csv_result_urls_access_url_no_match[$index] = join(' | ', $csv_no_match[$index]);
+            }
+
+            $csv_line = array();
+            $csv_line[] = $data->title;
+            $distributionUrl = (isset($data->distribution) && is_array($data->distribution)
+                && isset($data->distribution[0]->accessURL)) ? $data->distribution[0]->accessURL : false;
+            $csv_line[] = isset($data->accessURL) ? $data->accessURL : ($distributionUrl?:'');
+
+            $id = md5($data->identifier.$data->title);
+
+            $csv_line[] = $json_validation_results[$id]['Valid'] ? 'true' : 'false';
+
+            if (isset($json_validation_results[$id]['Errors']) && is_array($ers = $json_validation_results[$id]['Errors'])) {
+                $csv_line[] = sizeof($ers);
+            } else {
+                $csv_line[] = 0;
+            }
+
+            $csv_line[] = $csv_number_of_matches[$index];
+            $csv_line[] = $csv_access_url_match[$index];
+            $csv_line[] = $csv_is_geospatial[$index];
+            $csv_line[] = $csv_result_urls[$index] ?: $csv_result_urls_access_url_no_match[$index];
+
+            fputcsv($fp, $csv_line);
         }
     }
 

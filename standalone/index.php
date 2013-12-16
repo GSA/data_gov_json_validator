@@ -27,7 +27,10 @@ foreach (glob($results_dir.'*.json') as $dataset) {
 
 $start = time();
 
-foreach (glob($data_dir.'*.json') as $dataset) {
+$datasets = glob($data_dir.'*.json');
+sort($datasets);
+
+foreach ($datasets as $dataset) {
     data_gov_json_validator($dataset, JSON_SCHEMA_PATH, true);
 }
 
