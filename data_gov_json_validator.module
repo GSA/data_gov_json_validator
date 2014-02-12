@@ -78,8 +78,7 @@ function data_gov_json_validator_validator_form()
 function data_gov_json_validator($data_file_path, $schema_file_path, $search_enabled = false)
 {
     $basename = basename($data_file_path);
-    error_log('---===---===---===---' . PHP_EOL, 3, RESULTS_LOG);
-    error_log('Processing ' . $basename . PHP_EOL, 3, RESULTS_LOG);
+    error_log(str_pad($basename, 70, ' . '), 3, RESULTS_LOG);
     // Register the autoloader and ensure the library is available.
     composer_manager_register_autoloader();
     // Get the schema and data as objects
@@ -166,8 +165,14 @@ function data_gov_json_validator($data_file_path, $schema_file_path, $search_ena
     $json_total_results = json_encode($json_validation_results, JSON_PRETTY_PRINT);
     $resultsFile        = str_replace('.json', '_results.json', $basename);
     file_put_contents(__DIR__ . '/results/' . $resultsFile, $json_total_results);
-    error_log(" VALID: $valid ; INVALID: $invalid ; " . PHP_EOL, 3, RESULTS_LOG);
-    echo "$basename $valid / $invalid" . PHP_EOL;
+    echo str_pad($basename, 70, ' . ');
+
+    $percent = ceil($valid / ($valid + $invalid) * 100);
+    echo $out = '|' . str_pad("$percent% |", 7, ' ', STR_PAD_LEFT)
+        . str_pad("$valid valid |", 13, ' ', STR_PAD_LEFT)
+        . str_pad("$invalid invalid |", 15, ' ', STR_PAD_LEFT) . PHP_EOL;
+
+    error_log($out, 3, RESULTS_LOG);
 //    print_r($json_total_results);
 
     //search CKAN.
@@ -194,6 +199,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
         'Number of Matches in catalog.data.gov',
         'Access URL match flag',
         'Is Geospatial',
+        'Categories',
         'catalog.data.gov URLs for matches found',
     );
 
@@ -225,6 +231,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
         $csv_result_urls                     = array();
         $csv_result_urls_access_url_no_match = array();
         $csv_is_geospatial                   = array();
+        $csv_categories = array();
         $csv_access_url_match                = array();
         $csv_number_of_matches               = array();
         $csv_no_match                        = array();
@@ -236,6 +243,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
             $csv_result_urls[$index]                     = '';
             $csv_result_urls_access_url_no_match[$index] = '';
             $csv_is_geospatial[$index]                   = 'na';
+            $csv_categories[$index] = 'na';
             $csv_access_url_match[$index]                = 'no';
             $csv_number_of_matches[$index]               = 0;
             $csv_no_match[$index]                        = array();
@@ -336,10 +344,14 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
          * Writing CSV results for current data set
          */
         foreach ($data_chunk as $index => $data) {
-            if ('na' == $csv_is_geospatial[$index] && $csv_number_of_matches[$index]
-                && ('yes' == $csv_access_url_match[$index])
-            ) {
+            $url_match  = ('yes' == $csv_access_url_match[$index]);
+
+            if ('na' == $csv_is_geospatial[$index] && $csv_number_of_matches[$index] && $url_match) {
                 $csv_is_geospatial[$index] = 'false';
+            }
+
+            if ($csv_result_urls[$index]) {
+                $csv_categories[$index] = ckan_extract_category_tags($csv_result_urls[$index]);
             }
 
             if (sizeof($csv_no_match[$index])) {
@@ -365,6 +377,7 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
             $csv_line[] = $csv_number_of_matches[$index];
             $csv_line[] = $csv_access_url_match[$index];
             $csv_line[] = $csv_is_geospatial[$index];
+            $csv_line[] = $csv_categories[$index];
             $csv_line[] = $csv_result_urls[$index] ? : $csv_result_urls_access_url_no_match[$index];
 
             fputcsv($fp, $csv_line);
@@ -372,6 +385,47 @@ function data_gov_json_validator_csv_report($data_array, $json_validation_result
     }
 
     fclose($fp);
+}
+
+/**
+ * @param $dataset_url
+ * @return array|string
+ */
+function ckan_extract_category_tags($dataset_url)
+{
+    $dataset_url = str_replace('/dataset/', '/api/rest/dataset/', $dataset_url);
+    if (false === $dataset = curl_get_resource($dataset_url)) {
+        return 'na';
+    }
+
+    $dataset = json_decode($dataset, true);
+    if (!isset($dataset['groups']) || !is_array($dataset['groups']) || !sizeof($groups = $dataset['groups'])) {
+        return 'na';
+    }
+
+    if (!isset($dataset['extras']) || !is_array($dataset['extras']) || !sizeof($extras = $dataset['extras'])) {
+        return 'na';
+    }
+
+    $return = array();
+
+    foreach ($groups as $group) {
+//        get available [extras]
+//        __category_tag_3b4e71c5-3c3c-43af-a3ff-81694225e453
+        if (false === $category_id = ckan_get_category_id($group)) {
+            $return[$group] = 'na';
+            continue;
+        }
+        $tag_key = '__category_tag_' . $category_id;
+        if (isset($extras[$tag_key])) {
+            $return[$group] = json_decode($extras[$tag_key]);
+        } else {
+            $return[$group] = '';
+        }
+    }
+    $return = json_encode($return);
+
+    return $return;
 }
 
 /**
@@ -402,7 +456,7 @@ function data_gov_json_validator_search_solr($title, $rows = 100, $start = 0)
     curl_setopt($ch, CURLOPT_POSTFIELDS, $query);
     curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 0);
 
-    $retry = 0;
+    $retry = $curl_output = 0;
 
     while (++$retry <= CKAN_API_RETRY_ON_ERROR) {
 //        execute CURL request
@@ -419,6 +473,68 @@ function data_gov_json_validator_search_solr($title, $rows = 100, $start = 0)
     if (isset($error) && '' !== $error) {
         $result['curl_error'] = $error;
         echo "curl error with request " . CKAN_URL . " with request " . $query . " <br />" . PHP_EOL;
+        var_dump($result);
+    }
+
+    curl_close($ch);
+
+    return $curl_output ? : false;
+}
+
+/**
+ * @param $category_name
+ * @return bool
+ */
+function ckan_get_category_id($category_name)
+{
+    static $groups_set = array();
+
+    if (isset($groups_set[$category_name])) {
+        return $groups_set[$category_name];
+    }
+
+    $url = 'http://catalog.data.gov/api/rest/group/' . $category_name;
+
+    if (false === $category = curl_get_resource($url)) {
+        return false;
+    }
+
+    $category = json_decode($category, true);
+    if (!isset($category['id'])) {
+        return false;
+    }
+    $groups_set[$category_name] = $category['id'];
+
+    return $category['id'];
+}
+
+/**
+ * @param $url
+ * @return bool
+ */
+function curl_get_resource($url)
+{
+    //initialize curl and set base options
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_HEADER, "Content-Type: application/json;charset=utf-8");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 0);
+
+    $retry = $curl_output = 0;
+
+    while (++$retry <= CKAN_API_RETRY_ON_ERROR) {
+        $curl_output = curl_exec($ch);
+
+        $error = curl_error($ch);
+
+        if ('' == $error) {
+            break;
+        }
+    }
+
+    if (isset($error) && '' !== $error) {
+        $result['curl_error'] = $error;
+        echo "curl error with request " . $url . " <br />" . PHP_EOL;
         var_dump($result);
     }
 
