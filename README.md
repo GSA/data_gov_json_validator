@@ -40,6 +40,11 @@ and just run json testing/fixing of existing datasets.
 
 The `data/agency_json_download.log` will contain overall statistics about latest json update
 
+Updating JSON Schema
+===
+Run `php standalone/update-schema.php` to get latest schema from
+https://raw.github.com/project-open-data/project-open-data.github.io/master/schema/1_0_final/single_entry.json
+
 Validation and CKAN search
 ===
 
@@ -53,7 +58,7 @@ Validation and CKAN search
 
 2. Run script
 
-   For a standalone version, just run `php standalone/index.php`.
+   For a standalone version, just run `php standalone/process.php`.
 
 3. Grab the results from /results/ folder
 

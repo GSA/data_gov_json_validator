@@ -7,7 +7,7 @@
  * using download.php script.
  */
 
-require_once(__DIR__ . '/bootstrap.php');
+require_once(__DIR__ . '/../lib/bootstrap.php');
 
 $data_dir = __DIR__.'/../data/';
 $results_dir = __DIR__.'/../results/';
