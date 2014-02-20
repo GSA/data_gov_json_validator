@@ -1,6 +1,6 @@
 <?php
 
-define('SCHEMA_URL', 'https://raw.github.com/project-open-data/project-open-data.github.io/master/schema/1_0_final/single_entry.json');
+define('SCHEMA_URL', 'http://project-open-data.github.io/schema/1_0_final/single_entry.json');
 define('JSON_SCHEMA_PATH', __DIR__ . '/../config/schema.json');
 
 if (false === $schema = file_get_contents(SCHEMA_URL)) {

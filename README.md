@@ -43,7 +43,7 @@ The `data/agency_json_download.log` will contain overall statistics about latest
 Updating JSON Schema
 ===
 Run `php standalone/update-schema.php` to get latest schema from
-https://raw.github.com/project-open-data/project-open-data.github.io/master/schema/1_0_final/single_entry.json
+http://project-open-data.github.io/schema/1_0_final/single_entry.json
 
 Validation and CKAN search
 ===
