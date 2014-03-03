@@ -301,11 +301,14 @@ class JsonValidator
 
                             $accessUrl = isset($jsonDataset->accessURL) ? trim($jsonDataset->accessURL) : false;
 
+                            if (!sizeof($csv_no_match[$index])) {
+                                $csv_categories[$index] = $this->ckan_extract_category_tags($ckanDataset);
+                            }
+
                             $dataset_dump = print_r($ckanDataset, true);
                             if ($accessUrl && strstr($dataset_dump, $accessUrl)) {
                                 $csv_result_urls[$index]      = "http://catalog.data.gov/dataset/" . $ckanDataset['name'];
                                 $csv_access_url_match[$index] = 'yes';
-                                $csv_categories[$index]       = $this->ckan_extract_category_tags($ckanDataset);
 
 //                                boost
                                 $jsonDatasetFound[] = $jsonDataset->title;
@@ -387,6 +390,7 @@ class JsonValidator
         foreach ($groups as $group) {
             $category_id = $group['id'];
             $tag_key     = '__category_tag_' . $category_id;
+            $return[$group['title']] = '';
             foreach ($extras as $extra) {
                 if ($tag_key == $extra['key']) {
                     $return[$group['title']] = json_decode($extra['value']);
