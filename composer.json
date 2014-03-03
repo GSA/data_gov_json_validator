@@ -1,15 +1,40 @@
 {
-    "name": "drupal/data_gov_json_validator",
-    "type": "drupal-module",
-    "description": "A Framework and UI for integrating with the json schema library.",
-    "license": "GPL-2.0",
+    "name": "CKAN/open_data_json_validator",
+    "description": "Json validator against Open data schema, and catalog.data.gov CKAN API sync tools",
+    "minimum-stability": "dev",
+    "license": "GPL-3.0+",
     "authors": [
+        {
+            "name": "Alex Perfilov",
+            "email": "alexandr.perfilov@reisystems.com",
+            "role": "Senior Engineer"
+        },
         {
             "name": "Yatin Khadilkar",
             "role": "Project Lead"
         }
     ],
+    "autoload": {
+        "psr-0": {
+            "CKAN\\JsonValidator\\": "src/"
+        },
+        "classmap": [
+
+        ]
+    },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "git@github.com:alex-perfilov-reisys/ckan-php-client.git"
+        }
+    ],
     "require": {
-        "justinrainbow/json-schema": "~1.3.3"
+        "php": ">=5.4.17",
+        "ext-json": "*",
+        "justinrainbow/json-schema": "*",
+        "CKAN/php-client": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "*"
     }
 }

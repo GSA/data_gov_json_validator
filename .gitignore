@@ -3,3 +3,5 @@ composer.phar
 vendor/
 .DS_Store
 .idea
+inc/config.php
+resources/schema.json
