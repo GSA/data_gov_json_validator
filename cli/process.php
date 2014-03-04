@@ -24,7 +24,16 @@ define('RESULTS_LOG', RESULTS_DIR_YMD . '/processing.log');
 
 $start = time();
 
-$JsonValidator = new \CKAN\JsonValidator\JsonValidator();
+/**
+ * Production
+ */
+$JsonValidator = new \CKAN\JsonValidator\JsonValidator(CKAN_API_URL);
+
+/**
+ * Staging
+ */
+//$JsonValidator = new \CKAN\JsonValidator\JsonValidator(CKAN_STAGING_API_URL);
+
 $JsonValidator->clear();
 
 $datasets = glob(DATA_DIR . '/*.json');

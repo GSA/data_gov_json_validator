@@ -22,14 +22,17 @@ class JsonValidator
 
     private $titlesPerSearch = 1;
 
+    private $api_domain;
+
     private $Ckan;
 
     /**
      *
      */
-    public function __construct()
+    public function __construct($api_url)
     {
-        $this->Ckan = new CkanClient(CKAN_API_URL);
+        $this->api_domain = parse_url($api_url, PHP_URL_SCHEME) . '://' . parse_url($api_url, PHP_URL_HOST);
+        $this->Ckan       = new CkanClient($api_url);
     }
 
     public function clear()
@@ -170,11 +173,11 @@ class JsonValidator
             'Access URL in JSON',
             'Valid to POD Schema',
             'Number of Errors',
-            'Number of Matches in catalog.data.gov',
+            'Number of Matches in CKAN',
             'Access URL match flag',
             'Is Geospatial',
             'Categories',
-            'catalog.data.gov URLs for matches found',
+            'CKAN URLs for matches found',
         ];
 
         fputcsv($fp, $csv_header);
@@ -287,7 +290,7 @@ class JsonValidator
                     //If one or more matches found then try to match access URL
                     if ($number_of_results) {
                         foreach ($ckanResult['results'] as $ckanDataset) {
-                            if (trim($jsonDataset->title) !== trim($ckanDataset['title'])) {
+                            if ($this->simplifyTitle($jsonDataset->title) !== $this->simplifyTitle($ckanDataset['title'])) {
 //                            if the CKAN has another title, we skip it
                                 continue;
                             }
@@ -307,14 +310,14 @@ class JsonValidator
 
                             $dataset_dump = print_r($ckanDataset, true);
                             if ($accessUrl && strstr($dataset_dump, $accessUrl)) {
-                                $csv_result_urls[$index]      = "http://catalog.data.gov/dataset/" . $ckanDataset['name'];
+                                $csv_result_urls[$index] = $this->api_domain . '/dataset/' . $ckanDataset['name'];
                                 $csv_access_url_match[$index] = 'yes';
 
 //                                boost
                                 $jsonDatasetFound[] = $jsonDataset->title;
                                 break 2; //  skip next search : we already found our result
                             } else {
-                                $csv_no_match[$index][] = 'http://catalog.data.gov/dataset/' . $ckanDataset['name'];
+                                $csv_no_match[$index][] = $this->api_domain . '/dataset/' . $ckanDataset['name'];
                             }
                         }
                     }
@@ -373,6 +376,31 @@ class JsonValidator
     }
 
     /**
+     * @param $string
+     * @return mixed
+     */
+    private function escapeSolrValue($string)
+    {
+        $string = str_replace("'", '', $string);
+        $string = preg_replace('/[\W]+/', ' ', $string);
+
+        return $string;
+    }
+
+    /**
+     * @param $string
+     * @return mixed|string
+     */
+    private function simplifyTitle($string)
+    {
+        $string = str_replace("'", '', $string);
+        $string = preg_replace('/[\W]+/', '', $string);
+        $string = strtolower($string);
+
+        return $string;
+    }
+
+    /**
      * @param $dataset
      * @internal param $dataset_url
      * @return array|string
@@ -405,14 +433,19 @@ class JsonValidator
         return json_encode($return);
     }
 
-    /**
-     * @param $string
-     * @return mixed
-     */
-    private function escapeSolrValue($string)
+    public function test()
     {
-        $string = preg_replace('/[\W]+/', ' ', $string);
-
-        return $string;
+        $titles = [
+//            "Clean Air Status and Trends Network (CASTNET)",
+//            "EPA's Office of General Counsel (OGC) Web Page",
+            "Selected Regional Judicial Officer Cases, 2005 - Present",
+        ];
+        foreach ($titles as $title) {
+            $escaped_title = '((\"' . $this->escapeSolrValue($title) . '\"))';
+            echo $escaped_title . PHP_EOL;
+            $datasets = $this->Ckan->package_search('title:' . $escaped_title, $this->packageSearchPerPage, 0, 'fq');
+            echo json_encode(json_decode($datasets, true), JSON_PRETTY_PRINT);
+        }
+        die();
     }
 }

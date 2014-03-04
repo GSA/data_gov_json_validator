@@ -1,3 +1,5 @@
+"U.S. Agency for International Development",http://www.usaid.gov/data.json
+"Department of State",http://www.state.gov/data.json
 "Social Security Administration",http://www.ssa.gov/data.json
 "Department of Agriculture",http://www.usda.gov/data.json
 "Department of Defense",http://www.defense.gov/data.json
@@ -7,7 +9,6 @@
 "Department of Housing and Urban Development",http://www.hud.gov/data.json
 "Department of Justice",http://www.usdoj.gov/data.json
 "Department of Labor",http://www.dol.gov/data.json
-"Department of State",http://www.state.gov/data.json
 "Department of the Interior",http://www.doi.gov/data.json
 "Department of the Treasury",http://www.ustreas.gov/data.json
 "Department of Transportation",http://www.dot.gov/data.json
@@ -18,7 +19,6 @@
 "National Science Foundation",http://www.nsf.gov/data.json
 "Nuclear Regulatory Commission",http://www.nrc.gov/data.json
 "Office of Personnel Management",http://www.opm.gov/data.json
-"U.S. Agency for International Development",http://www.usaid.gov/data.json
 "Committee on Foreign Investment in the United States",http://www.treasury.gov/data.json
 "Consumer Financial Protection Bureau",http://www.consumerfinance.gov/data.json
 "Economic, Business and Agricultural Affairs",http://www.state.gov/data.json
