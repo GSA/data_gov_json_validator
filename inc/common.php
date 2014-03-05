@@ -19,4 +19,8 @@ if (!is_dir(ROOT_DIR . '/vendor')) {
 
 require ROOT_DIR . '/vendor/autoload.php';
 
+if (!is_file('config.php')) {
+    throw new Exception('Please copy inc/config.sample.php to inc/config.php and check its values');
+}
+
 require 'config.php';

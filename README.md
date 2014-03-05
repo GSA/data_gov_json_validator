@@ -13,31 +13,34 @@ Installation
 ===
 
 1. Download the [`composer.phar`](https://getcomposer.org/composer.phar) executable or use the installer.
-
     ``` sh
     $ curl -sS https://getcomposer.org/installer | php
     ```
 
 2. Run Composer:
-
     ``` sh
     $ php composer.phar install
     ```
+
+3. Copy `inc/config.sample.php` to `inc/config.php` and check its values
 
 Getting JSON files from the agencies
 ===
 
 1. Check and update `resources/agency_json_urls.csv`. The format is simple: `"AGENCY_TITLE", json_url`
-```
-"Department of Agriculture",http://www.usda.gov/data.json
-"Department of Education",http://www.ed.gov/data.json
-"Department of Energy",http://www.energy.gov/data.json
-```
+    ```
+    "Department of Agriculture",http://www.usda.gov/data.json
+    "Department of Education",http://www.ed.gov/data.json
+    "Department of Energy",http://www.energy.gov/data.json
+    ```
 
-2. Run `php cli/download.php` to download latest JSONs.
+2. To download latest JSONs run
+    ``` sh
+    $ php cli/download.php
+    ```
+
 
 The `data/agency_json_download.log` will contain overall statistics about latest json update, ex.:
-
 ```
 Importing Department of Defense json .  .  .  .  .  .  .  .  .  .  .  NETWORK ERROR 404
 Importing Department of Education json .  .  .  .  .  .  .  .  .  .  .SUCCESS (FIXED UTF8)
@@ -51,33 +54,44 @@ Importing General Services Administration json .  .  .  .  .  .  .  . SUCCESS (R
 
 Updating JSON Schema
 ===
-Run `php cli/update-schema.php` to get latest schema from
-http://project-open-data.github.io/schema/1_0_final/single_entry.json
+To get latest schema from
+http://project-open-data.github.io/schema/1_0_final/single_entry.json run
+``` sh
+$ php cli/update-schema.php
+```
 
 Validation and CKAN search
 ===
 
-1. Put all your JSON datasets to /data/ folder OR [download them using download.php](#getting-json-files-from-the-agencies)
+Before running the script, think of [updating schema.json](#updating-json-schema) and updating dependencies:
+``` sh
+$ php composer.phar update
+```
 
-  Files must be in JSON, named by *.json pattern
+1. Put all your JSON datasets to `/data/` folder OR [download them using download.php](#getting-json-files-from-the-agencies)
+
+  Files must be in JSON, named by `*.json` pattern
   * `example1.json`
   * `department_treasury.json`
   * `last_department.json`
 
 
 2. Run script
+    ``` sh
+    $ php cli/validate.php
+    ```
 
-   For a standalone version, just run `php cli/validate.php`.
+3. Grab the results from `/results/{date}_VALIDATION folder`
 
-3. Grab the results from /results/{date}_VALIDATION folder
-
-   The results will be called using data files name, with _results postfix:
+   The results will be called using data files name, with _results postfix.
   * `example1_results.json`
   * `example1_results.csv`
   * `department_treasury_results.json`
   * `department_treasury_results.csv`
   * `last_department_results.json`
   * `last_department_results.csv`
+
+  `Json` file contains json validation information, and `csv` file has CKAN search results
 
   The `processing.log` in same folder will give you some overall statistics information.
 
