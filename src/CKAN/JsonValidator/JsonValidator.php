@@ -195,6 +195,11 @@ class JsonValidator
 //        prepare solr search request
             $titles = $original_titles = $jsonDatasetFound = [];
             foreach ($data_chunk as $jsonDataset) {
+
+                if (!($currentTitleCounter++ % 50)) {
+                    echo $currentTitleCounter . " of $totalTitles" . PHP_EOL;
+                }
+
                 $original_titles[] = $jsonDataset->title;
                 $titles[]          = '(\"' . $this->escapeSolrValue($jsonDataset->title) . '\")';
             }
@@ -279,9 +284,6 @@ class JsonValidator
 //                    boost
                     if (in_array($jsonDataset->title, $jsonDatasetFound)) {
                         continue;
-                    }
-                    if (!($currentTitleCounter++ % 50)) {
-                        echo $currentTitleCounter . " of $totalTitles" . PHP_EOL;
                     }
 
                     //number of results
