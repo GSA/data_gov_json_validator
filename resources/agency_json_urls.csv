@@ -1,15 +1,13 @@
+"Office of Personnel Management",http://www.opm.gov/data.json
 "U.S. Agency for International Development",http://www.usaid.gov/data.json
 "Department of State",http://www.state.gov/data.json
 "Social Security Administration",http://www.ssa.gov/data.json
-"Department of Agriculture",http://www.usda.gov/data.json
-"Department of Defense",http://www.defense.gov/data.json
 "Department of Education",http://www.ed.gov/data.json
 "Department of Energy",http://www.energy.gov/data.json
 "Department of Health and Human Services",http://www.hhs.gov/data.json
 "Department of Housing and Urban Development",http://www.hud.gov/data.json
 "Department of Justice",http://www.usdoj.gov/data.json
 "Department of Labor",http://www.dol.gov/data.json
-"Department of the Interior",http://www.doi.gov/data.json
 "Department of the Treasury",http://www.ustreas.gov/data.json
 "Department of Transportation",http://www.dot.gov/data.json
 "Department of Veterans Affairs",http://www.va.gov/data.json
@@ -18,7 +16,6 @@
 "National Archives and Records Administration",http://www.archives.gov/data.json
 "National Science Foundation",http://www.nsf.gov/data.json
 "Nuclear Regulatory Commission",http://www.nrc.gov/data.json
-"Office of Personnel Management",http://www.opm.gov/data.json
 "Committee on Foreign Investment in the United States",http://www.treasury.gov/data.json
 "Consumer Financial Protection Bureau",http://www.consumerfinance.gov/data.json
 "Economic, Business and Agricultural Affairs",http://www.state.gov/data.json
@@ -30,3 +27,23 @@
 "Political Affairs",http://www.state.gov/data.json
 "Public Diplomacy and Public Affairs",http://www.state.gov/data.json
 "Securities and Exchange Commission",http://www.sec.gov/data.json
+"Department of Agriculture",http://www.usda.gov/data.json
+"Department of the Interior",http://www.doi.gov/data.json
+data.sfgov.org,https://data.sfgov.org/data.json?version=2
+data.baltimorecity.gov,https://data.baltimorecity.gov/data.json?version=2
+data.cityofchicago.org,https://data.cityofchicago.org/data.json?version=2
+nycopendata.socrata.com,https://nycopendata.socrata.com/data.json?version=2
+data.ny.gov,https://data.ny.gov/data.json?version=2
+data.honolulu.gov,https://data.honolulu.gov/data.json?version=2
+data.seattle.gov,https://data.seattle.gov/data.json?version=2
+data.somervillema.gov,https://data.somervillema.gov/data.json?version=2
+data.kingcounty.gov,https://data.kingcounty.gov/data.json?version=2
+data.montgomerycountymd.gov,https://data.montgomerycountymd.gov/data.json?version=2
+datacatalog.cookcountyil.gov,https://datacatalog.cookcountyil.gov/data.json?version=2
+data.hawaii.gov,https://data.hawaii.gov/data.json?version=2
+data.illinois.gov,https://data.illinois.gov/data.json?version=2
+data.maryland.gov,https://data.maryland.gov/data.json?version=2
+data.mo.gov,https://data.mo.gov/data.json?version=2
+data.ok.gov,https://data.ok.gov/data.json?version=2
+data.oregon.gov,https://data.oregon.gov/data.json?version=2
+data.wa.gov,https://data.wa.gov/data.json?version=2

@@ -1,7 +1,7 @@
 <?php
 
 // debug mode on
-error_reporting(E_ALL);
+error_reporting(E_ALL ^ E_NOTICE);
 ini_set('display_errors', 1);
 
 // 30 minutes
@@ -17,6 +17,8 @@ if (!is_dir(ROOT_DIR . '/vendor')) {
     throw new Exception('Install dependencies via composer');
 }
 
+define('TIMER_START', time());
+
 require ROOT_DIR . '/vendor/autoload.php';
 
 if (!is_file(ROOT_DIR . '/inc/config.php')) {
@@ -24,3 +26,10 @@ if (!is_file(ROOT_DIR . '/inc/config.php')) {
 }
 
 require ROOT_DIR . '/inc/config.php';
+
+function timer()
+{
+    $finish = time();
+    echo PHP_EOL . 'Time spent ' .
+        floor((($finish - TIMER_START) / 60)) . ' minutes ' . (($finish - TIMER_START) % 60) . ' seconds ' . PHP_EOL;
+}

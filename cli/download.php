@@ -30,5 +30,5 @@ foreach (glob(RESOURCES_DIR . '/*.csv') as $json_urls_csv_path) {
 
 file_put_contents(DATA_DIR . '/agency_json_download.log', $log);
 
-?>
-done
+// show running time on finish
+timer();

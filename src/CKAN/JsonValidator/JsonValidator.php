@@ -143,7 +143,7 @@ class JsonValidator
         file_put_contents(RESULTS_DIR_YMD . '/' . $resultsFile, $json_total_results);
         echo str_pad($basename, 70, ' . ');
 
-        $percent = ceil($valid / ($valid + $invalid) * 100);
+        $percent = floor($valid / ($valid + $invalid) * 100);
         echo $out = '|' . str_pad("$percent% |", 7, ' ', STR_PAD_LEFT)
             . str_pad("$valid valid |", 13, ' ', STR_PAD_LEFT)
             . str_pad("$invalid invalid |", 15, ' ', STR_PAD_LEFT) . PHP_EOL;
@@ -312,7 +312,7 @@ class JsonValidator
 
                             $dataset_dump = print_r($ckanDataset, true);
                             if ($accessUrl && strstr($dataset_dump, $accessUrl)) {
-                                $csv_result_urls[$index] = $this->api_domain . '/dataset/' . $ckanDataset['name'];
+                                $csv_result_urls[$index]      = $this->api_domain . '/dataset/' . $ckanDataset['name'];
                                 $csv_access_url_match[$index] = 'yes';
 
 //                                boost
@@ -390,12 +390,16 @@ class JsonValidator
     }
 
     /**
+     * Sometimes harvested ckan title does not exactly matches, but dataset is same, ex. double spaces
+     * To avoid these cases, we remove all non-word chars, leaving only alphabetic and digit chars
+     * Ex.
+     * Input: Tree dog dataset    , agriculture, 1997 ?????!!!
+     * Output: treedogdatasetagriculture1997
      * @param $string
      * @return mixed|string
      */
     private function simplifyTitle($string)
     {
-        $string = str_replace("'", '', $string);
         $string = preg_replace('/[\W]+/', '', $string);
         $string = strtolower($string);
 
@@ -418,8 +422,8 @@ class JsonValidator
         $extras = isset($dataset['extras']) ? $dataset['extras'] : [];
 
         foreach ($groups as $group) {
-            $category_id = $group['id'];
-            $tag_key     = '__category_tag_' . $category_id;
+            $category_id             = $group['id'];
+            $tag_key                 = '__category_tag_' . $category_id;
             $return[$group['title']] = '';
             foreach ($extras as $extra) {
                 if ($tag_key == $extra['key']) {
@@ -433,21 +437,5 @@ class JsonValidator
         }
 
         return json_encode($return);
-    }
-
-    public function test()
-    {
-        $titles = [
-//            "Clean Air Status and Trends Network (CASTNET)",
-//            "EPA's Office of General Counsel (OGC) Web Page",
-            "Selected Regional Judicial Officer Cases, 2005 - Present",
-        ];
-        foreach ($titles as $title) {
-            $escaped_title = '((\"' . $this->escapeSolrValue($title) . '\"))';
-            echo $escaped_title . PHP_EOL;
-            $datasets = $this->Ckan->package_search('title:' . $escaped_title, $this->packageSearchPerPage, 0, 'fq');
-            echo json_encode(json_decode($datasets, true), JSON_PRETTY_PRINT);
-        }
-        die();
     }
 }

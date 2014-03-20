@@ -1,7 +1,8 @@
 composer.lock
 composer.phar
 vendor/
+results/
 .DS_Store
 .idea
 inc/config.php
-resources/schema.json
+resources/*schema.json

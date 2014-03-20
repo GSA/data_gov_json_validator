@@ -22,8 +22,6 @@ define('RESULTS_DIR_YMD', $results_dir);
 
 define('RESULTS_LOG', RESULTS_DIR_YMD . '/processing.log');
 
-$start = time();
-
 /**
  * Production
  */
@@ -39,13 +37,11 @@ $JsonValidator->clear();
 $datasets = glob(DATA_DIR . '/*.json');
 sort($datasets);
 
+define('ENABLE_CKAN_VALIDATION', false);
+
 foreach ($datasets as $dataset) {
-    $JsonValidator->validate($dataset, JSON_SCHEMA_PATH, true);
+    $JsonValidator->validate($dataset, JSON_SCHEMA_PATH, ENABLE_CKAN_VALIDATION);
 }
 
-$finish = time();
-echo PHP_EOL . 'Time spent ' .
-    floor((($finish - $start) / 60)) . ' minutes ' . (($finish - $start) % 60) . ' seconds ' . PHP_EOL;
-
-?>
-done
+// show running time on finish
+timer();
