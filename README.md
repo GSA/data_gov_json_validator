@@ -52,12 +52,13 @@ Importing Department of Veterans Affairs json .  .  .  .  .  .  .  .  SUCCESS
 Importing General Services Administration json .  .  .  .  .  .  .  . SUCCESS (REMOVED BOM)
 ```
 
-Updating JSON Schema
+Updating JSON Schemas
 ===
-To get latest schema from
-http://project-open-data.github.io/schema/1_0_final/single_entry.json run
+To get latest [federal](http://project-open-data.github.io/schema/1_0_final/single_entry.json)
+and [non-federal](https://raw.githubusercontent.com/GSA/pod-schema-variants/master/v1.0/non-federal/single_entry.json)
+schemas run
 ``` sh
-$ php cli/update-schema.php
+$ php cli/update-schemas.php
 ```
 
 Validation and CKAN search

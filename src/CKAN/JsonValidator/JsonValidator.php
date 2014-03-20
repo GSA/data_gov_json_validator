@@ -56,7 +56,6 @@ class JsonValidator
     public function validate($data_file_path, $schema_file_path, $search_enabled = false)
     {
         $basename = basename($data_file_path);
-        error_log(str_pad($basename, 70, ' . '), 3, RESULTS_LOG);
         // Get the schema and data as objects
         $retriever = new UriRetriever();
 
@@ -139,16 +138,18 @@ class JsonValidator
         }
 
         $json_total_results = json_encode($json_validation_results, JSON_PRETTY_PRINT);
-        $resultsFile        = str_replace('.json', '_results.json', $basename);
+        $resultsFile = str_replace('.json', '_results_' . FED_SUFFIX . '.json', $basename);
         file_put_contents(RESULTS_DIR_YMD . '/' . $resultsFile, $json_total_results);
-        echo str_pad($basename, 70, ' . ');
+
+        echo $log_output = (str_pad($basename, 70, ' . ') . str_pad('(' . FED_SUFFIX . '-schema)', 18, ' . ', STR_PAD_LEFT));
+        error_log($log_output, 3, RESULTS_LOG);
 
         $percent = floor($valid / ($valid + $invalid) * 100);
-        echo $out = '|' . str_pad("$percent% |", 7, ' ', STR_PAD_LEFT)
+        echo $log_output = '|' . str_pad("$percent% |", 7, ' ', STR_PAD_LEFT)
             . str_pad("$valid valid |", 13, ' ', STR_PAD_LEFT)
             . str_pad("$invalid invalid |", 15, ' ', STR_PAD_LEFT) . PHP_EOL;
 
-        error_log($out, 3, RESULTS_LOG);
+        error_log($log_output, 3, RESULTS_LOG);
 //    print_r($json_total_results);
 
         //search CKAN.
