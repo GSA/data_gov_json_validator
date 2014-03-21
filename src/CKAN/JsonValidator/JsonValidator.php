@@ -35,6 +35,9 @@ class JsonValidator
         $this->Ckan       = new CkanClient($api_url);
     }
 
+    /**
+     *
+     */
     public function clear()
     {
         is_file(RESULTS_LOG) && unlink(RESULTS_LOG);
@@ -122,6 +125,11 @@ class JsonValidator
 
             // Validate
             $validator = new Validator();
+            /**
+             * DG-1952
+             * Trim URL field in agency json for validator consumption
+             */
+            $this->trimUrls($data);
             $validator->check($data, $schema);
             $json_validation_results[$id]["Title"]      = $data->title;
             $json_validation_results[$id]["identifier"] = $data->identifier;
@@ -156,6 +164,30 @@ class JsonValidator
         if ($search_enabled) {
             $this->ckan_search($data_array, $json_validation_results, $basename);
         }
+    }
+
+    /**
+     * DG-1952
+     * Trim URL field in agency json for validator consumption
+     * @param $Json_entry
+     * @return bool
+     * @author Alex Perfilov
+     */
+    private function trimUrls($Json_entry)
+    {
+        if (isset($Json_entry->accessURL) && is_string($Json_entry->accessURL)) {
+            $Json_entry->accessURL = trim($Json_entry->accessURL);
+        }
+
+        if (isset($Json_entry->distribution) && is_array($Json_entry->distribution)) {
+            foreach ($Json_entry->distribution as $distribution) {
+                if (isset($distribution->accessURL) && is_string($distribution->accessURL)) {
+                    $distribution->accessURL = trim($distribution->accessURL);
+                }
+            }
+        }
+
+        return true;
     }
 
     /**
