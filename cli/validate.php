@@ -10,12 +10,8 @@
 require_once dirname(__DIR__) . '/inc/common.php';
 
 define('ENABLE_CKAN_VALIDATION', false);
-define('USE_FEDERAL_SCHEMA', false);
-define('SCHEMA_PATH', USE_FEDERAL_SCHEMA ? JSON_FEDERAL_SCHEMA_PATH : JSON_NON_FEDERAL_SCHEMA_PATH);
-define('FED_SUFFIX', USE_FEDERAL_SCHEMA ? 'fed' : 'non-fed');
 
-
-if (!is_file(SCHEMA_PATH)) {
+if (!is_file(JSON_FEDERAL_SCHEMA_PATH) || !is_file(JSON_NON_FEDERAL_SCHEMA_PATH)) {
     throw new Exception('Please get latest json schema using cli/update-schemas script');
 }
 
@@ -44,7 +40,8 @@ $datasets = glob(DATA_DIR . '/*.json');
 sort($datasets);
 
 foreach ($datasets as $dataset) {
-    $JsonValidator->validate($dataset, SCHEMA_PATH, ENABLE_CKAN_VALIDATION);
+    $JsonValidator->validate($dataset, JSON_FEDERAL_SCHEMA_PATH, ENABLE_CKAN_VALIDATION, 'fed');
+    $JsonValidator->validate($dataset, JSON_NON_FEDERAL_SCHEMA_PATH, ENABLE_CKAN_VALIDATION, 'non-fed');
 }
 
 // show running time on finish

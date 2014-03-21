@@ -55,8 +55,9 @@ class JsonValidator
      * @param $data_file_path
      * @param $schema_file_path
      * @param bool $search_enabled
+     * @param string $fed_suffix
      */
-    public function validate($data_file_path, $schema_file_path, $search_enabled = false)
+    public function validate($data_file_path, $schema_file_path, $search_enabled = false, $fed_suffix = 'false')
     {
         $basename = basename($data_file_path);
         // Get the schema and data as objects
@@ -146,10 +147,10 @@ class JsonValidator
         }
 
         $json_total_results = json_encode($json_validation_results, JSON_PRETTY_PRINT);
-        $resultsFile = str_replace('.json', '_results_' . FED_SUFFIX . '.json', $basename);
+        $resultsFile        = str_replace('.json', '_results_' . $fed_suffix . '.json', $basename);
         file_put_contents(RESULTS_DIR_YMD . '/' . $resultsFile, $json_total_results);
 
-        echo $log_output = (str_pad($basename, 70, ' . ') . str_pad('(' . FED_SUFFIX . '-schema)', 18, ' . ', STR_PAD_LEFT));
+        echo $log_output = (str_pad($basename, 70, ' . ') . str_pad('(' . $fed_suffix . '-schema)', 18, ' . ', STR_PAD_LEFT));
         error_log($log_output, 3, RESULTS_LOG);
 
         $percent = floor($valid / ($valid + $invalid) * 100);
