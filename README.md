@@ -54,8 +54,8 @@ Importing General Services Administration json .  .  .  .  .  .  .  . SUCCESS (R
 
 Updating JSON Schemas
 ===
-To get latest [federal](http://project-open-data.github.io/schema/1_0_final/single_entry.json)
-and [non-federal](https://raw.githubusercontent.com/GSA/pod-schema-variants/master/v1.0/non-federal/single_entry.json)
+To get latest [federal](https://github.com/GSA/pod-schema-variants/tree/master/v1.0/federal)
+and [non-federal](https://github.com/philipashlock/farm-server/tree/master/schema/non-federal-temp)
 schemas run
 ``` sh
 $ php cli/update-schemas.php

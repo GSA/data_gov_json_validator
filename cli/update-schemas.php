@@ -17,7 +17,7 @@ try {
         }
         echo 'Success: Federal json schema has been updated' . PHP_EOL;
     } else {
-        throw new Exception('Fatal Error: Could not find control phrase "json-schema" on ' . FEDERAL_SCHEMA_URL . PHP_EOL);
+        throw new Exception('Fatal Error: Could not find control phrase "json-schema" on federal ' . FEDERAL_SCHEMA_URL . PHP_EOL);
     }
 } catch (Exception $ex) {
     echo 'Fatal:' . $ex->getMessage() . PHP_EOL;
@@ -34,9 +34,9 @@ try {
         if (false === file_put_contents(JSON_NON_FEDERAL_SCHEMA_PATH, $schema)) {
             throw new Exception('Fatal Error: Could not write to file ' . JSON_NON_FEDERAL_SCHEMA_PATH . PHP_EOL);
         }
-        echo 'Success: Federal json schema has been updated' . PHP_EOL;
+        echo 'Success: Non-Federal json schema has been updated' . PHP_EOL;
     } else {
-        throw new Exception('Fatal Error: Could not find control phrase "json-schema" on ' . NON_FEDERAL_SCHEMA_URL . PHP_EOL);
+        throw new Exception('Fatal Error: Could not find control phrase "json-schema" on non-federal ' . NON_FEDERAL_SCHEMA_URL . PHP_EOL);
     }
 } catch (Exception $ex) {
     echo 'Fatal:' . $ex->getMessage() . PHP_EOL;

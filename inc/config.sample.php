@@ -9,8 +9,11 @@ define('AGENCIES_LIST_URL', 'http://idm.data.gov/fed_agency.json');
 /**
  * Json schema to validate against it
  */
-define('FEDERAL_SCHEMA_URL', 'http://project-open-data.github.io/schema/1_0_final/single_entry.json');
-define('NON_FEDERAL_SCHEMA_URL', 'https://raw.githubusercontent.com/GSA/pod-schema-variants/master/v1.0/non-federal/single_entry.json');
+#3 POD Schema Variants: Federal: https://github.com/GSA/pod-schema-variants/tree/master/v1.0/federal
+define('FEDERAL_SCHEMA_URL', 'https://raw.githubusercontent.com/GSA/pod-schema-variants/master/v1.0/federal/single_entry.json');
+
+#6 POD Schema Variants: Non-Federal (temp) :https://github.com/philipashlock/farm-server/tree/master/schema/non-federal-temp
+define('NON_FEDERAL_SCHEMA_URL', 'https://raw.githubusercontent.com/GSA/project-open-data-dashboard/master/schema/non-federal-temp/single_entry.json');
 
 /**
  * Resources dir for schema and json list csv
