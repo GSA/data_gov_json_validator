@@ -6,7 +6,6 @@
 
 namespace CKAN\JsonValidator;
 
-
 /**
  * Class DatasetImporter
  * @package CKAN\JsonValidator
@@ -27,9 +26,10 @@ class DatasetImporter
      * @param $agency
      * @param $json_url
      * @param $log
+     * @param $json_encode_options
      * @return bool
      */
-    public function import($agency, $json_url, &$log)
+    public function import($agency, $json_url, &$log, $json_encode_options)
     {
         echo $out = str_pad('Importing ' . $agency . ' json', 70, ' . ');
         $log .= $out;
@@ -78,18 +78,18 @@ class DatasetImporter
                     break;
             }
 
-            $try = iconv('UTF-8', 'UTF-8//IGNORE', utf8_encode($content));
-            $try = json_decode($try, JSON_UNESCAPED_SLASHES);
+            $try   = iconv('UTF-8', 'UTF-8//IGNORE', $content);
+            $try   = json_decode($try);
             if (!is_null($try)) {
-                $json  = json_encode($try, JSON_PRETTY_PRINT);
+                $json = json_encode($try, $json_encode_options);
                 $fixed = 'SUCCESS (FIXED UTF8)';
             }
 
             if (!$fixed) {
-                $a   = trim(iconv('UTF-8', 'UTF-8//IGNORE', utf8_encode(trim(preg_replace('/\x{EF}\x{BB}\x{BF}/', '', $content)))));
+                $a = trim(preg_replace('/\x{EF}\x{BB}\x{BF}/', '', $content));
                 $try = json_decode($a);
                 if (!is_null($try)) {
-                    $json  = json_encode($try, JSON_PRETTY_PRINT);
+                    $json = json_encode($try, $json_encode_options);
                     $fixed = 'SUCCESS (REMOVED BOM)';
                 }
             }
@@ -98,23 +98,23 @@ class DatasetImporter
                 $a   = trim(preg_replace('/\x{EF}\x{BB}\x{BF}/', '', $content));
                 $try = json_decode($a);
                 if (!is_null($try)) {
-                    $json  = json_encode($try, JSON_PRETTY_PRINT);
+                    $json = json_encode($try, $json_encode_options);
                     $fixed = 'SUCCESS (REMOVED BOM AND FIXED UTF8)';
                 }
             }
 
             if (!$fixed && (strrpos($content, ']['))) {
                 $a   = str_replace('][', ',', $content);
-                $a   = trim(iconv('UTF-8', 'UTF-8//IGNORE', utf8_encode(trim(preg_replace('/\x{EF}\x{BB}\x{BF}/', '', $a)))));
+                $a = trim(iconv('UTF-8', 'UTF-8//IGNORE', trim(preg_replace('/\x{EF}\x{BB}\x{BF}/', '', $a))));
                 $try = json_decode($a);
                 if (!is_null($try)) {
-                    $json  = json_encode($try, JSON_PRETTY_PRINT);
+                    $json = json_encode($try, $json_encode_options);
                     $fixed = 'SUCCESS (REPLACED "][" WITH "," )';
                 }
             }
 
         } else {
-            $json = json_encode($try, JSON_PRETTY_PRINT);
+            $json = json_encode($try, $json_encode_options);
         }
 
         $result = file_put_contents($jsonPath, $json);

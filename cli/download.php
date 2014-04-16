@@ -24,7 +24,12 @@ foreach (glob(RESOURCES_DIR . '/*.csv') as $json_urls_csv_path) {
         }
         list($agency, $json_url) = str_getcsv($line, ',');
 
-        $DatasetImporter->import($agency, $json_url, $log);
+        $DatasetImporter->import(
+            $agency,
+            $json_url,
+            $log,
+            JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
     }
 }
 

@@ -87,7 +87,11 @@ class JsonValidator
                 error_log($json_file_error . ' - Syntax error, malformed JSON' . PHP_EOL, 3, RESULTS_LOG);
                 break;
             case JSON_ERROR_UTF8:
-                error_log($json_file_error . ' - Malformed UTF-8 characters, possibly incorrectly encoded' . PHP_EOL, 3, RESULTS_LOG);
+                error_log(
+                    $json_file_error . ' - Malformed UTF-8 characters, possibly incorrectly encoded' . PHP_EOL,
+                    3,
+                    RESULTS_LOG
+                );
                 break;
             default:
                 error_log($json_file_error . ' - Unknown error' . PHP_EOL, 3, RESULTS_LOG);
@@ -150,7 +154,12 @@ class JsonValidator
         $resultsFile        = str_replace('.json', '_results_' . $fed_suffix . '.json', $basename);
         file_put_contents(RESULTS_DIR_YMD . '/' . $resultsFile, $json_total_results);
 
-        echo $log_output = (str_pad($basename, 70, ' . ') . str_pad('(' . $fed_suffix . '-schema)', 18, ' . ', STR_PAD_LEFT));
+        echo $log_output = (str_pad($basename, 70, ' . ') . str_pad(
+                '(' . $fed_suffix . '-schema)',
+                18,
+                ' . ',
+                STR_PAD_LEFT
+            ));
         error_log($log_output, 3, RESULTS_LOG);
 
         $percent = floor($valid / ($valid + $invalid) * 100);
@@ -275,7 +284,12 @@ class JsonValidator
                 $try = $ckanResult = 0;
                 while (true) {
                     try {
-                        $ckanResult = $this->Ckan->package_search('title:' . $title, $this->packageSearchPerPage, $start, 'fq');
+                        $ckanResult = $this->Ckan->package_search(
+                            'title:' . $title,
+                            $this->packageSearchPerPage,
+                            $start,
+                            'fq'
+                        );
                     } catch (\Exception $ex) {
                         if ($try++ > 5) {
                             throw $ex;
@@ -326,7 +340,10 @@ class JsonValidator
                     //If one or more matches found then try to match access URL
                     if ($number_of_results) {
                         foreach ($ckanResult['results'] as $ckanDataset) {
-                            if ($this->simplifyTitle($jsonDataset->title) !== $this->simplifyTitle($ckanDataset['title'])) {
+                            if ($this->simplifyTitle($jsonDataset->title) !== $this->simplifyTitle(
+                                    $ckanDataset['title']
+                                )
+                            ) {
 //                            if the CKAN has another title, we skip it
                                 continue;
                             }
@@ -392,7 +409,10 @@ class JsonValidator
 
                 $csv_line[] = $json_validation_results[$id]['Valid'] ? 'true' : 'false';
 
-                if (isset($json_validation_results[$id]['Errors']) && is_array($ers = $json_validation_results[$id]['Errors'])) {
+                if (isset($json_validation_results[$id]['Errors']) && is_array(
+                        $ers = $json_validation_results[$id]['Errors']
+                    )
+                ) {
                     $csv_line[] = sizeof($ers);
                 } else {
                     $csv_line[] = 0;
@@ -417,8 +437,8 @@ class JsonValidator
      */
     private function escapeSolrValue($string)
     {
-        $string = str_replace("'", '', $string);
-        $string = preg_replace('/[\W]+/', ' ', $string);
+        $string = preg_replace("/'/u", '', $string);
+        $string = preg_replace('/[\W]+/u', ' ', $string);
 
         return $string;
     }

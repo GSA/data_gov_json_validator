@@ -9,8 +9,6 @@
  */
 require_once dirname(__DIR__) . '/inc/common.php';
 
-define('ENABLE_CKAN_VALIDATION', false);
-
 if (!is_file(JSON_FEDERAL_SCHEMA_PATH) || !is_file(JSON_NON_FEDERAL_SCHEMA_PATH)) {
     throw new Exception('Please get latest json schema using cli/update-schemas script');
 }
@@ -34,13 +32,20 @@ $JsonValidator = new \CKAN\JsonValidator\JsonValidator(CKAN_API_URL);
  */
 //$JsonValidator = new \CKAN\JsonValidator\JsonValidator(CKAN_STAGING_API_URL);
 
+
+if (!ENABLE_CKAN_VALIDATION) {
+    echo $wrn = 'WARNING: ENABLE_CKAN_VALIDATION disabled. Only json validating now!' . PHP_EOL;
+    error_log($wrn, 3, RESULTS_LOG);
+}
+
+
 $JsonValidator->clear();
 
 $datasets = glob(DATA_DIR . '/*.json');
 sort($datasets);
 
 foreach ($datasets as $dataset) {
-    $JsonValidator->validate($dataset, JSON_FEDERAL_SCHEMA_PATH, ENABLE_CKAN_VALIDATION, 'fed');
+    $JsonValidator->validate($dataset, JSON_FEDERAL_SCHEMA_PATH, false, 'fed');
     $JsonValidator->validate($dataset, JSON_NON_FEDERAL_SCHEMA_PATH, ENABLE_CKAN_VALIDATION, 'non-fed');
 }
 

@@ -1,13 +1,17 @@
+"Department of Labor",http://www.dol.gov/data.json
+
+
+"Department of Education",http://www2.ed.gov/data.json
+"Department of Justice",http://www.justice.gov/data.json
+"Department of Energy",http://www.energy.gov/data.json
+"Department of Agriculture",http://www.usda.gov/data.json
 "Office of Personnel Management",http://www.opm.gov/data.json
 "U.S. Agency for International Development",http://www.usaid.gov/data.json
 "Department of State",http://www.state.gov/data.json
 "Social Security Administration",http://www.ssa.gov/data.json
-"Department of Education",http://www.ed.gov/data.json
-"Department of Energy",http://www.energy.gov/data.json
 "Department of Health and Human Services",http://www.hhs.gov/data.json
 "Department of Housing and Urban Development",http://www.hud.gov/data.json
 "Department of Justice",http://www.usdoj.gov/data.json
-"Department of Labor",http://www.dol.gov/data.json
 "Department of the Treasury",http://www.ustreas.gov/data.json
 "Department of Transportation",http://www.dot.gov/data.json
 "Department of Veterans Affairs",http://www.va.gov/data.json
@@ -27,7 +31,6 @@
 "Political Affairs",http://www.state.gov/data.json
 "Public Diplomacy and Public Affairs",http://www.state.gov/data.json
 "Securities and Exchange Commission",http://www.sec.gov/data.json
-"Department of Agriculture",http://www.usda.gov/data.json
 "Department of the Interior",http://www.doi.gov/data.json
 data.sfgov.org,https://data.sfgov.org/data.json?version=2
 data.baltimorecity.gov,https://data.baltimorecity.gov/data.json?version=2

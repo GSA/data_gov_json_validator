@@ -37,3 +37,8 @@ define('DATA_DIR', ROOT_DIR . '/data');
 define('CKAN_API_URL', 'https://catalog.data.gov/api/3/');
 
 define('CKAN_STAGING_API_URL', 'http://staging.catalog.data.gov/api/3/');
+
+/**
+ * Disable ckan validation, if you want just json validation results, to speed up runtime
+ */
+define('ENABLE_CKAN_VALIDATION', true);
