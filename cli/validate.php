@@ -28,6 +28,11 @@ define('RESULTS_LOG', RESULTS_DIR_YMD . '/processing.log');
 $JsonValidator = new \CKAN\JsonValidator\JsonValidator(CKAN_API_URL);
 
 /**
+ * QA
+ */
+//$JsonValidator = new \CKAN\JsonValidator\JsonValidator(CKAN_QA_API_URL);
+
+/**
  * Staging
  */
 //$JsonValidator = new \CKAN\JsonValidator\JsonValidator(CKAN_STAGING_API_URL);
@@ -45,8 +50,8 @@ $datasets = glob(DATA_DIR . '/*.json');
 sort($datasets);
 
 foreach ($datasets as $dataset) {
-    $JsonValidator->validate($dataset, JSON_FEDERAL_SCHEMA_PATH, false, 'fed');
-    $JsonValidator->validate($dataset, JSON_NON_FEDERAL_SCHEMA_PATH, ENABLE_CKAN_VALIDATION, 'non-fed');
+    $JsonValidator->validate($dataset, JSON_NON_FEDERAL_SCHEMA_PATH, false, 'non-fed');
+    $JsonValidator->validate($dataset, JSON_FEDERAL_SCHEMA_PATH, ENABLE_CKAN_VALIDATION, 'fed');
 }
 
 // show running time on finish

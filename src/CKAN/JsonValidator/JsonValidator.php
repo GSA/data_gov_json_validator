@@ -18,7 +18,7 @@ use JsonSchema\Validator;
  */
 class JsonValidator
 {
-    private $packageSearchPerPage = 200;
+    private $packageSearchPerPage = 50;
 
     private $titlesPerSearch = 1;
 
@@ -236,6 +236,7 @@ class JsonValidator
 
         foreach ($data_chunks as $data_chunk) {
 //        prepare solr search request
+
             $titles = $original_titles = $jsonDatasetFound = [];
             foreach ($data_chunk as $jsonDataset) {
 
@@ -305,6 +306,7 @@ class JsonValidator
 
                 if ($start > $this->packageSearchPerPage) {
                     echo PHP_EOL . 'Multi page search start from ' . $start . ' for request:' . PHP_EOL . $title . PHP_EOL . PHP_EOL;
+                    break;
                 }
 
                 $ckanResult = json_decode($ckanResult, true); //  decode json as array
@@ -329,7 +331,8 @@ class JsonValidator
                 }
 
                 foreach ($data_chunk as $index => $jsonDataset) {
-//                    boost
+
+//                    boost: skipping already found records
                     if (in_array($jsonDataset->title, $jsonDatasetFound)) {
                         continue;
                     }
@@ -357,12 +360,26 @@ class JsonValidator
 
                             $accessUrl = isset($jsonDataset->accessURL) ? trim($jsonDataset->accessURL) : false;
 
+                            $distributionUrl = (isset($jsonDataset->distribution) && is_array(
+                                    $jsonDataset->distribution
+                                )
+                                && isset($jsonDataset->distribution[0]->accessURL)) ? trim(
+                                $jsonDataset->distribution[0]->accessURL
+                            ) : false;
+
                             if (!sizeof($csv_no_match[$index])) {
                                 $csv_categories[$index] = $this->ckan_extract_category_tags($ckanDataset);
                             }
 
                             $dataset_dump = print_r($ckanDataset, true);
                             if ($accessUrl && strstr($dataset_dump, $accessUrl)) {
+                                $csv_result_urls[$index] = $this->api_domain . '/dataset/' . $ckanDataset['name'];
+                                $csv_access_url_match[$index] = 'yes';
+
+//                                boost
+                                $jsonDatasetFound[] = $jsonDataset->title;
+                                break 2; //  skip next search : we already found our result
+                            } elseif ($distributionUrl && strstr($dataset_dump, $distributionUrl)) {
                                 $csv_result_urls[$index]      = $this->api_domain . '/dataset/' . $ckanDataset['name'];
                                 $csv_access_url_match[$index] = 'yes';
 
