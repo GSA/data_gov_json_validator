@@ -52,9 +52,9 @@ class JsonValidator
     }
 
     /**
-     * @param $data_file_path
-     * @param $schema_file_path
-     * @param bool $search_enabled
+     * @param        $data_file_path
+     * @param        $schema_file_path
+     * @param bool   $search_enabled
      * @param string $fed_suffix
      */
     public function validate($data_file_path, $schema_file_path, $search_enabled = false, $fed_suffix = 'false')
@@ -179,7 +179,9 @@ class JsonValidator
     /**
      * DG-1952
      * Trim URL field in agency json for validator consumption
+     *
      * @param $Json_entry
+     *
      * @return bool
      * @author Alex Perfilov
      */
@@ -197,6 +199,14 @@ class JsonValidator
             }
         }
 
+//        if (isset($Json_entry->resources) && is_array($Json_entry->resources)) {
+//            foreach ($Json_entry->resources as $resource) {
+//                if (isset($resource->url) && is_string($resource->url)) {
+//                    $resource->url = trim($resource->url);
+//                }
+//            }
+//        }
+
         return true;
     }
 
@@ -204,12 +214,18 @@ class JsonValidator
      * @param $data_array
      * @param $json_validation_results
      * @param $basename
+     *
      * @throws \Exception
      */
     private function ckan_search($data_array, $json_validation_results, $basename)
     {
-        $resultsFile = str_replace('.json', '_results.csv', $basename);
-        $fp          = fopen(RESULTS_DIR_YMD . '/' . $resultsFile, 'w');
+        $resultsFile       = str_replace('.json', '_results.csv', $basename);
+        $returnFilePointer = fopen(RESULTS_DIR_YMD . '/' . $resultsFile, 'w');
+
+        $legacyFile        = str_replace('.json', '_legacy.csv', $basename);
+        $legacyFilePointer = fopen(RESULTS_DIR_YMD . '/' . $legacyFile, 'w');
+
+        fputcsv($legacyFilePointer, ['Old dataset url', 'Legacy dataset url']);
 
         $csv_header = [
             'Dataset Title in JSON',
@@ -223,7 +239,7 @@ class JsonValidator
             'CKAN URLs for matches found',
         ];
 
-        fputcsv($fp, $csv_header);
+        fputcsv($returnFilePointer, $csv_header);
 
         /**
          * Split json data to sets of titlesPerSearch , for speed-up script running by
@@ -367,20 +383,27 @@ class JsonValidator
                                 $jsonDataset->distribution[0]->accessURL
                             ) : false;
 
+//                            $resourceUrl = (isset($jsonDataset->resources) && is_array(
+//                                    $jsonDataset->resources
+//                                )
+//                                && isset($jsonDataset->resources[0]->url)) ? trim(
+//                                $jsonDataset->resources[0]->url
+//                            ) : false;
+
                             if (!sizeof($csv_no_match[$index])) {
                                 $csv_categories[$index] = $this->ckan_extract_category_tags($ckanDataset);
                             }
 
                             $dataset_dump = print_r($ckanDataset, true);
-                            if ($accessUrl && strstr($dataset_dump, $accessUrl)) {
-                                $csv_result_urls[$index] = $this->api_domain . '/dataset/' . $ckanDataset['name'];
-                                $csv_access_url_match[$index] = 'yes';
 
-//                                boost
-                                $jsonDatasetFound[] = $jsonDataset->title;
-                                break 2; //  skip next search : we already found our result
-                            } elseif ($distributionUrl && strstr($dataset_dump, $distributionUrl)) {
-                                $csv_result_urls[$index]      = $this->api_domain . '/dataset/' . $ckanDataset['name'];
+                            $accessUrlFound = (bool)($accessUrl && strstr($dataset_dump, $accessUrl));
+                            $anyUrlFound    = (bool)($accessUrlFound || ($distributionUrl && strstr(
+                                        $dataset_dump,
+                                        $distributionUrl
+                                    )));
+
+                            if ($anyUrlFound) {
+                                $csv_result_urls[$index] = $this->api_domain . '/dataset/' . $ckanDataset['name'];
                                 $csv_access_url_match[$index] = 'yes';
 
 //                                boost
@@ -441,15 +464,23 @@ class JsonValidator
                 $csv_line[] = $csv_categories[$index];
                 $csv_line[] = $csv_result_urls[$index] ? : $csv_result_urls_access_url_no_match[$index];
 
-                fputcsv($fp, $csv_line);
+                fputcsv($returnFilePointer, $csv_line);
+
+                if (1 == $csv_number_of_matches[$index]) {
+                    $url             = $csv_result_urls[$index] ? : $csv_result_urls_access_url_no_match[$index];
+                    $legacy_csv_line = [$url, $url . '_legacy'];
+                    fputcsv($legacyFilePointer, $legacy_csv_line);
+                }
             }
         }
 
-        fclose($fp);
+        fclose($returnFilePointer);
+        fclose($legacyFilePointer);
     }
 
     /**
      * @param $string
+     *
      * @return mixed
      */
     private function escapeSolrValue($string)
@@ -466,7 +497,9 @@ class JsonValidator
      * Ex.
      * Input: Tree dog dataset    , agriculture, 1997 ?????!!!
      * Output: treedogdatasetagriculture1997
+     *
      * @param $string
+     *
      * @return mixed|string
      */
     private function simplifyTitle($string)
@@ -479,6 +512,7 @@ class JsonValidator
 
     /**
      * @param $dataset
+     *
      * @internal param $dataset_url
      * @return array|string
      */
