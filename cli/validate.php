@@ -13,6 +13,10 @@ if (!is_file(JSON_FEDERAL_SCHEMA_PATH) || !is_file(JSON_NON_FEDERAL_SCHEMA_PATH)
     throw new Exception('Please get latest json schema using cli/update-schemas script');
 }
 
+if (!is_dir(RESULTS_DIR)) {
+    mkdir(RESULTS_DIR);
+}
+
 /**
  * Create results dir for logs and csv/json results
  */
